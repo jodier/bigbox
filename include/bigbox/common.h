@@ -68,7 +68,9 @@ typedef struct bigbox_hash_table_s
 {
 	int dim;
 
-	struct bigbox_hash_table_item_s *table;
+	struct bigbox_hash_table_item_s **table;
+
+	pthread_mutex_t mutex;
 
 } bigbox_hash_table_t;
 
