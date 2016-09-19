@@ -98,7 +98,7 @@ uint64_t bigbox_hash(BUFF_t buff, size_t size, uint64_t seed1, uint64_t seed2)
 
 	/*-----------------------------------------------------------------*/
 
-	uint64_t b = ((uint64_t) size) << 56;
+	uint64_t b = ((uint64_t) size) << (64 - 8);
 
 	switch(size_mod_8)
 	{
