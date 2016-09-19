@@ -5,6 +5,7 @@ all:
 
 	gcc -O3 -c -o src/common/client.o src/common/client.c
 	gcc -O3 -c -o src/common/hash.o src/common/hash.c
+	gcc -O3 -c -o src/common/hash_table.o src/common/hash_table.c
 	gcc -O3 -c -o src/common/log.o src/common/log.c
 	gcc -O3 -c -o src/common/rio.o src/common/rio.c
 	gcc -O3 -c -o src/common/server.o src/common/server.c
