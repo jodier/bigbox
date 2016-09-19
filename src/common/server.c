@@ -62,7 +62,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	int ret;
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
+	/* CREATE SOCKET                                                   */
 	/*-----------------------------------------------------------------*/
 
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -73,8 +73,6 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	}
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
-	/*-----------------------------------------------------------------*/
 
 	SOCKADDR_IN sockaddr = {0};
 
@@ -82,8 +80,6 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	sockaddr.sin_port = htons(port);
 	sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	/*-----------------------------------------------------------------*/
-	/*                                                                 */
 	/*-----------------------------------------------------------------*/
 
 	int option = 1;
@@ -98,7 +94,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	}
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
+	/* BIND SOCKET                                                     */
 	/*-----------------------------------------------------------------*/
 
 	ret = bind(sock, (SOCKADDR *) &sockaddr, sizeof(sockaddr));
@@ -111,7 +107,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	}
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
+	/* LISTEN SOCKET                                                   */
 	/*-----------------------------------------------------------------*/
 
 	ret = listen(sock, backlog);
@@ -124,7 +120,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	}
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
+	/* PATCH CONTEXT                                                   */
 	/*-----------------------------------------------------------------*/
 
 	server_ctx->port = port;

@@ -63,7 +63,7 @@ int bigbox_client_connect(bigbox_client_ctx_t *client_ctx, const char *addr, uin
 	int ret;
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
+	/* RESOLVE HOST NAME                                               */
 	/*-----------------------------------------------------------------*/
 
 	IN_ADDR in_addr;
@@ -85,7 +85,7 @@ int bigbox_client_connect(bigbox_client_ctx_t *client_ctx, const char *addr, uin
 	}
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
+	/* CREATE SOCKET                                                   */
 	/*-----------------------------------------------------------------*/
 
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -96,8 +96,6 @@ int bigbox_client_connect(bigbox_client_ctx_t *client_ctx, const char *addr, uin
 	}
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
-	/*-----------------------------------------------------------------*/
 
 	SOCKADDR_IN sockaddr = {0};
 
@@ -106,7 +104,7 @@ int bigbox_client_connect(bigbox_client_ctx_t *client_ctx, const char *addr, uin
 	sockaddr.sin_addr = in_addr;
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
+	/* CONNECT SOCKET                                                  */
 	/*-----------------------------------------------------------------*/
 
 	ret = connect(sock, (SOCKADDR *) &sockaddr, sizeof(sockaddr));
@@ -119,7 +117,7 @@ int bigbox_client_connect(bigbox_client_ctx_t *client_ctx, const char *addr, uin
 	}
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
+	/* PATCH CONTEXT                                                   */
 	/*-----------------------------------------------------------------*/
 
 	client_ctx->addr = addr;
