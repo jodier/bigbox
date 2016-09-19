@@ -30,8 +30,6 @@
 #if !defined(_WIN32) && !defined(_WIN64)
   #include <unistd.h>
 
-  #include <sys/socket.h>
-
   #include <arpa/inet.h>
 #else
   #include <winsock2.h>
