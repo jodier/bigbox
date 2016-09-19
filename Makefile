@@ -10,6 +10,8 @@ all:
 	gcc -O3 -c -o src/common/server.o src/common/server.c
 	gcc -O3 -c -o src/common/server_pooler.o src/common/server_pooler.c
 
+	mkdir -p lib
+
 	ar rcs lib/libbigbox-common.a src/common/*.o
 
 	#####################################################################
