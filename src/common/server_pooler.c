@@ -77,6 +77,7 @@ static void *__handler(void *args)
 		/**/	/*-------------------------------------------------*/
 		/**/
 		/**/	thread->pooler_ctx->nb_of_free_thread -= 1;
+		/**/
 		/**/	thread->pooler_ctx->client_sock = -1;
 		/**/
 		/**/	/*-------------------------------------------------*/

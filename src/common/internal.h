@@ -50,13 +50,14 @@ typedef struct bigbox_server_thread_s
 	/*-----------------------------------------------------------------*/
 
 	void (* loop_handler_ptr)(struct bigbox_server_thread_s *);
+
 	void *user_handler_ptr;
 
 	/*-----------------------------------------------------------------*/
 
-	int client_sock;
-
 	pthread_t pthread;
+
+	int client_sock;
 
 	/*-----------------------------------------------------------------*/
 
