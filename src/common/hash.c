@@ -34,26 +34,29 @@
 
 /*-------------------------------------------------------------------------*/
 
-#define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
+static __inline__ uint64_t rotl(uint64_t x, uint64_t b) /* will be optimized by the compiler */
+{
+	return (x << b) | (x >> (64 - b));
+}
 
 /*-------------------------------------------------------------------------*/
 
 #define SIP_ROUND()                                                         \
 	do {                                                                \
 		v0 += v1;                                                   \
-		v1 = ROTL(v1, 13);                                          \
+		v1 = rotl(v1, 13);                                          \
 		v1 ^= v0;                                                   \
-		v0 = ROTL(v0, 32);                                          \
+		v0 = rotl(v0, 32);                                          \
 		v2 += v3;                                                   \
-		v3 = ROTL(v3, 16);                                          \
+		v3 = rotl(v3, 16);                                          \
 		v3 ^= v2;                                                   \
 		v0 += v3;                                                   \
-		v3 = ROTL(v3, 21);                                          \
+		v3 = rotl(v3, 21);                                          \
 		v3 ^= v0;                                                   \
 		v2 += v1;                                                   \
-		v1 = ROTL(v1, 17);                                          \
+		v1 = rotl(v1, 17);                                          \
 		v1 ^= v2;                                                   \
-		v2 = ROTL(v2, 32);                                          \
+		v2 = rotl(v2, 32);                                          \
 	} while(0)
 
 /*-------------------------------------------------------------------------*/
@@ -79,8 +82,8 @@ uint64_t bigbox_hash(BUFF_t buff, size_t size, uint64_t seed1, uint64_t seed2)
 	const uint64_t size_div_8 = size / 8UL;
 	const uint64_t size_mod_8 = size % 8UL;
 
-	/***/ register uint8_t *p = ((uint8_t *) buff) + 0 * size_div_8;
-	const register uint8_t *q = ((uint8_t *) buff) + 8 * size_div_8;
+	register /***/ uint8_t *p = ((uint8_t *) buff) + 0 * size_div_8;
+	register const uint8_t *q = ((uint8_t *) buff) + 8 * size_div_8;
 
 	/*-----------------------------------------------------------------*/
 
