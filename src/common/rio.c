@@ -151,7 +151,7 @@ __CONSTRUCTOR(C) static void C(void)
 
 	if(err < 0)
 	{
-
+		/* TODO */
 	}
 }
 #endif
