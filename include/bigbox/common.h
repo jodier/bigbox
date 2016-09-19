@@ -91,15 +91,9 @@ typedef struct bigbox_client_s
 
 typedef struct bigbox_server_ctx_s
 {
-	/*-----------------------------------------------------------------*/
-	/*                                                                 */
-	/*-----------------------------------------------------------------*/
-
 	uint16_t port;
 
 	int sock;
-
-	/*-----------------------------------------------------------------*/
 
 } bigbox_server_ctx_t;
 
@@ -113,6 +107,27 @@ typedef struct bigbox_server_ctx_s
 
 #define bigbox_server_ctx_get_nr(server_ctx) \
 	((server_ctx)->nr)
+
+/*-------------------------------------------------------------------------*/
+
+typedef struct bigbox_pooler_ctx_s
+{
+	/*-----------------------------------------------------------------*/
+
+	volatile int alive;
+	volatile int client_sock;
+	volatile int nb_of_free_thread;
+
+	/*-----------------------------------------------------------------*/
+
+	pthread_mutex_t mutex;
+
+	pthread_cond_t new_client;
+	pthread_cond_t free_thread;
+
+	/*-----------------------------------------------------------------*/
+
+} bigbox_pooler_ctx_t;
 
 /*-------------------------------------------------------------------------*/
 

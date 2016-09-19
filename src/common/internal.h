@@ -39,3 +39,37 @@ typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
 
 /*-------------------------------------------------------------------------*/
+
+typedef struct bigbox_server_thread_s
+{
+	/*-----------------------------------------------------------------*/
+
+	struct bigbox_server_ctx_s *server_ctx;
+	struct bigbox_pooler_ctx_s *pooler_ctx;
+
+	/*-----------------------------------------------------------------*/
+
+	void (* loop_handler_ptr)(struct bigbox_server_thread_s *);
+	void *user_handler_ptr;
+
+	/*-----------------------------------------------------------------*/
+
+	int client_sock;
+
+	pthread_t pthread;
+
+	/*-----------------------------------------------------------------*/
+
+} bigbox_server_thread_t;
+
+/*-------------------------------------------------------------------------*/
+
+void bigbox_server_pooler(
+	struct bigbox_server_ctx_s *server_ctx,
+	struct bigbox_pooler_ctx_s *pooler_ctx,
+	void (* loop_handler_ptr)(struct bigbox_server_thread_s *),
+	void *user_handler_ptr,
+	int nb_of_threads
+);
+
+/*-------------------------------------------------------------------------*/

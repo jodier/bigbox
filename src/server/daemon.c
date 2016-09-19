@@ -69,6 +69,11 @@ int main(int argc, char **argv)
 
 	printf("Starting BigBox on port %d...\n", port);
 
+	printf("%llx\n", bigbox_hash("Hello World!", 12, 0, 0));
+	printf("%llx\n", bigbox_hash("Hello World?", 12, 0, 0));
+	printf("%llx\n", bigbox_hash("Hello World!", 12, 110, 220));
+	printf("%llx\n", bigbox_hash("Hello World?", 12, 110, 220));
+
 	/*-----------------------------------------------------------------*/
 
 	return 0;
