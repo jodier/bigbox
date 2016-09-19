@@ -80,7 +80,7 @@ void bigbox_hash_table_final(bigbox_hash_table_t *hash_table)
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_hash_table_set_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash, buff_t buff, size_t size)
+void bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash, buff_t buff, size_t size)
 {
 	/*-----------------------------------------------------------------*/
 
@@ -109,17 +109,19 @@ void bigbox_hash_table_set_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_hash_table_set(bigbox_hash_table_t *hash_table, const char *key, buff_t buff, size_t size)
+void bigbox_hash_table_put(bigbox_hash_table_t *hash_table, const char *key, buff_t buff, size_t size)
 {
 	uint64_t hash = bigbox_hash(key, strlen(key), _seed1, _seed2);
 
-	bigbox_hash_table_set_by_hash(hash_table, hash, buff, size);
+	bigbox_hash_table_put_by_hash(hash_table, hash, buff, size);
 }
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash, buff_t *buff, size_t *size)
+bool bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash, buff_t *buff, size_t *size)
 {
+	bool result;
+
 	/*-----------------------------------------------------------------*/
 
 	struct bigbox_hash_table_item_s *item = hash_table->table[hash % hash_table->dim];
@@ -142,6 +144,8 @@ void bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	/**/				*size = item->size;
 	/**/			}
 	/**/
+	/**/			result = true;
+	/**/
 	/**/			break;
 	/**/		}
 	/**/
@@ -157,6 +161,8 @@ void bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	/**/				*size = 0x00;
 	/**/			}
 	/**/
+	/**/			result = false;
+	/**/
 	/**/			break;
 	/**/		}
 	/**/
@@ -170,15 +176,33 @@ void bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	pthread_mutex_unlock(&hash_table->mutex);
 
 	/*-----------------------------------------------------------------*/
+
+	return result;
 }
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_hash_table_get(bigbox_hash_table_t *hash_table, const char *key, buff_t *buff, size_t *size)
+bool bigbox_hash_table_get(bigbox_hash_table_t *hash_table, const char *key, buff_t *buff, size_t *size)
 {
 	uint64_t hash = bigbox_hash(key, strlen(key), _seed1, _seed2);
 
-	bigbox_hash_table_get_by_hash(hash_table, hash, buff, size);
+	return bigbox_hash_table_get_by_hash(hash_table, hash, buff, size);
+}
+
+/*-------------------------------------------------------------------------*/
+
+void bigbox_hash_table_del_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash)
+{
+
+}
+
+/*-------------------------------------------------------------------------*/
+
+void bigbox_hash_table_del(bigbox_hash_table_t *hash_table, const char *key)
+{
+	uint64_t hash = bigbox_hash(key, strlen(key), _seed1, _seed2);
+
+	bigbox_hash_table_del_by_hash(hash_table, hash);
 }
 
 /*-------------------------------------------------------------------------*/
