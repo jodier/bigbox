@@ -129,7 +129,7 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 	int ret;
 
 	/*-----------------------------------------------------------------*/
-	/* ?????                                                           */
+	/* PATCH CONTEXT                                                   */
 	/*-----------------------------------------------------------------*/
 
 	pooler_ctx->alive = 1;
@@ -138,8 +138,6 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 
 	pooler_ctx->nb_of_free_thread = nb_of_threads;
 
-	/*-----------------------------------------------------------------*/
-	/* INIT MUTEX                                                      */
 	/*-----------------------------------------------------------------*/
 
 	ret = pthread_mutex_init(&pooler_ctx->mutex, NULL);
@@ -150,8 +148,6 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 	}
 
 	/*-----------------------------------------------------------------*/
-	/* INIT CONDITION                                                  */
-	/*-----------------------------------------------------------------*/
 
 	ret = pthread_cond_init(&pooler_ctx->new_client, NULL);
 
@@ -160,8 +156,6 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 		bigbox_log(LOG_TYPE_FATAL, "could not create pcond!\n");
 	}
 
-	/*-----------------------------------------------------------------*/
-	/* INIT CONDITION                                                  */
 	/*-----------------------------------------------------------------*/
 
 	ret = pthread_cond_init(&pooler_ctx->free_thread, NULL);
