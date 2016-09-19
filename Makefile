@@ -25,3 +25,6 @@ all:
 	gcc -o bigbox-cli src/server/daemon.o
 
 	#####################################################################
+
+clean:
+	rm -fr src/common/*.o src/server/*.o src/client/*.o bigbox-server bigbox-cli

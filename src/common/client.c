@@ -30,6 +30,8 @@
 #if !defined(_WIN32) && !defined(_WIN64)
   #include <netdb.h>
   #include <unistd.h>
+
+  #include <arpa/inet.h>
 #else
   #include <winsock2.h>
 #endif
