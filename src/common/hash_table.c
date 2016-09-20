@@ -66,20 +66,16 @@ bool bigbox_hash_table_initialize(bigbox_hash_table_t *hash_table, size_t dim)
 void bigbox_hash_table_finalize(bigbox_hash_table_t *hash_table)
 {
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
-	/*-----------------------------------------------------------------*/
 
-	bigbox_hash_table_item_t *item;
+	bigbox_hash_table_item_t *hash_table_item;
 
-	while((item = bigbox_list_get_tail_named(hash_table->list, list_prev, list_next)) != NULL)
+	while((hash_table_item = bigbox_list_get_tail_named(hash_table->list, list_prev, list_next)) != NULL)
 	{
-		bigbox_list_remove_named(hash_table->list, item, list_prev, list_next);
+		bigbox_list_remove_named(hash_table->list, hash_table_item, list_prev, list_next);
 
-		free(item);
+		free(hash_table_item);
 	}
 
-	/*-----------------------------------------------------------------*/
-	/*                                                                 */
 	/*-----------------------------------------------------------------*/
 
 	hash_table->dim = 0x00;
@@ -96,20 +92,59 @@ void bigbox_hash_table_finalize(bigbox_hash_table_t *hash_table)
 
 /*-------------------------------------------------------------------------*/
 
-bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash, buff_t buff, size_t size)
+void bigbox_hash_table_release_item_unsafe(bigbox_hash_table_t *hash_table, bigbox_hash_table_item_t *hash_table_item, size_t indx)
+{
+	/**/	if(--hash_table_item->refcnt < 1)
+	/**/	{
+	/**/		bigbox_list_remove_named(hash_table->list, hash_table_item, list_prev, list_next);
+	/**/
+	/**/		bigbox_list_remove_named(hash_table->table[indx], hash_table_item, table_prev, table_next);
+	/**/
+	/**/		free(hash_table_item);
+	/**/	}
+}
+
+/*-------------------------------------------------------------------------*/
+
+void bigbox_hash_table_release_item(bigbox_hash_table_t *hash_table, bigbox_hash_table_item_t *hash_table_item)
 {
 	/*-----------------------------------------------------------------*/
 
-	bigbox_hash_table_item_t *item = malloc(sizeof(bigbox_hash_table_item_t) + size);
+	int indx = hash_table_item->hash
+	           %
+		   hash_table->dim
+	;
 
-	if(item == NULL)
+	/*-----------------------------------------------------------------*/
+
+	pthread_mutex_lock(&hash_table->mutex);
+
+	/**/	bigbox_hash_table_release_item_unsafe(hash_table, hash_table_item, indx);
+
+	pthread_mutex_unlock(&hash_table->mutex);
+
+	/*-----------------------------------------------------------------*/
+}
+
+/*-------------------------------------------------------------------------*/
+
+bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash, buff_t buff, size_t size, uint32_t expire)
+{
+	/*-----------------------------------------------------------------*/
+
+	bigbox_hash_table_item_t *hash_table_item = malloc(sizeof(bigbox_hash_table_item_t) + size);
+
+	if(hash_table_item == NULL)
 	{
 		return false;
 	}
 
-	item->hash = hash;
-	memcpy(item->buff, buff, size);
-	item->size = size;
+	hash_table_item->refcnt = 0x0001;
+	hash_table_item->expire = expire;
+
+	hash_table_item->hash = hash;
+	memcpy(hash_table_item->buff, buff, size);
+	hash_table_item->size = size;
 
 	/*-----------------------------------------------------------------*/
 
@@ -119,11 +154,9 @@ bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 
 	pthread_mutex_lock(&hash_table->mutex);
 
-	/**/	bigbox_list_append_tail_named(hash_table->list, item, list_prev, list_next);
+	/**/	bigbox_list_append_tail_named(hash_table->list, hash_table_item, list_prev, list_next);
 	/**/
-	/**/	item->table_next = hash_table->table[indx];
-	/**/
-	/**/	hash_table->table[indx] = (((item)));
+	/**/	bigbox_list_append_tail_named(hash_table->table[indx], hash_table_item, table_prev, table_next);
 
 	pthread_mutex_unlock(&hash_table->mutex);
 
@@ -134,11 +167,11 @@ bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 
 /*-------------------------------------------------------------------------*/
 
-bool bigbox_hash_table_put(bigbox_hash_table_t *hash_table, const char *key, buff_t buff, size_t size)
+bool bigbox_hash_table_put(bigbox_hash_table_t *hash_table, const char *key, buff_t buff, size_t size, uint32_t expire)
 {
 	uint64_t hash = bigbox_hash(key, strlen(key), SEED1, SEED2);
 
-	return bigbox_hash_table_put_by_hash(hash_table, hash, buff, size);
+	return bigbox_hash_table_put_by_hash(hash_table, hash, buff, size, expire);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -147,21 +180,23 @@ bool bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 {
 	/*-----------------------------------------------------------------*/
 
-	bigbox_hash_table_item_t *item = hash_table->table[hash % hash_table->dim];
+	bigbox_hash_table_item_t *hash_table_item = hash_table->table[hash % hash_table->dim], *base = hash_table_item;
 
 	/*-----------------------------------------------------------------*/
 
 	pthread_mutex_lock(&hash_table->mutex);
 
-	/**/	for(;;)
+	/**/	for(int i = 0;; i++)
 	/**/	{
 	/**/		/*-------------------------------------------------*/
 	/**/
-	/**/		if(item->hash == hash)
+	/**/		if(hash_table_item->hash == hash)
 	/**/		{
 	/**/			if(result)
 	/**/			{
-	/**/				*result = item;
+	/**/				hash_table_item->refcnt++;
+	/**/
+	/**/				*result = hash_table_item;
 	/**/			}
 	/**/
 	/**/			pthread_mutex_unlock(&hash_table->mutex);
@@ -171,11 +206,13 @@ bool bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	/**/
 	/**/		/*-------------------------------------------------*/
 	/**/
-	/**/		if(item->table_next == NULL)
+	/**/		if(i != 0 && hash_table_item->table_next == base)
 	/**/		{
 	/**/			if(result)
 	/**/			{
-	/**/				*result = NULL;
+	/**/				/* ** ITEM NOT FOUND ** */
+	/**/
+	/**/				*result = 0x0000000000000;
 	/**/			}
 	/**/
 	/**/			pthread_mutex_unlock(&hash_table->mutex);
@@ -185,7 +222,7 @@ bool bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	/**/
 	/**/		/*-------------------------------------------------*/
 	/**/
-	/**/		item = item->table_next;
+	/**/		hash_table_item = hash_table_item->table_next;
 	/**/
 	/**/		/*-------------------------------------------------*/
 	/**/	}
@@ -204,36 +241,27 @@ bool bigbox_hash_table_get(bigbox_hash_table_t *hash_table, const char *key, big
 
 /*-------------------------------------------------------------------------*/
 
-bool bigbox_hash_table_del_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash, bigbox_hash_table_item_t **result)
+bool bigbox_hash_table_del_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash)
 {
 	/*-----------------------------------------------------------------*/
 
-	bigbox_hash_table_item_t *item = hash_table->table[hash % hash_table->dim], *prev = item;
+	size_t indx = hash % hash_table->dim;
+
+	/*-----------------------------------------------------------------*/
+
+	bigbox_hash_table_item_t *hash_table_item = hash_table->table[indx], *base = hash_table_item;
 
 	/*-----------------------------------------------------------------*/
 
 	pthread_mutex_lock(&hash_table->mutex);
 
-	/**/	for(;;)
+	/**/	for(int i = 0;; i++)
 	/**/	{
 	/**/		/*-------------------------------------------------*/
 	/**/
-	/**/		if(item->hash == hash)
+	/**/		if(hash_table_item->hash == hash)
 	/**/		{
-	/**/			/*-----------------------------------------*/
-	/**/
-	/**/			bigbox_list_remove_named(hash_table->list, item, list_prev, list_next);
-	/**/
-	/**/			prev->table_next = item->table_next;
-	/**/
-	/**/			item->table_next = NULL;
-	/**/
-	/**/			/*-----------------------------------------*/
-	/**/
-	/**/			if(item != NULL)
-	/**/			{
-	/**/				*result = item;
-	/**/			}
+	/**/			bigbox_hash_table_release_item_unsafe(hash_table, hash_table_item, indx);
 	/**/
 	/**/			pthread_mutex_unlock(&hash_table->mutex);
 	/**/
@@ -242,22 +270,9 @@ bool bigbox_hash_table_del_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	/**/
 	/**/		/*-------------------------------------------------*/
 	/**/
-	/**/		if(item->table_next == NULL)
+	/**/		if(i != 0 && hash_table_item->table_next == base)
 	/**/		{
-	/**/			/*-----------------------------------------*/
-	/**/
-	/**/			/* NOT FOUND, NOT FOUND, NOT FOUND, NOT FOUND, NOT FOUND, NOT FOUND */;
-	/**/
-	/**/			/* NOT FOUND, NOT FOUND, NOT FOUND */;
-	/**/
-	/**/			/* NOT FOUND, NOT FOUND */;
-	/**/
-	/**/			/*-----------------------------------------*/
-	/**/
-	/**/			if(item != NULL)
-	/**/			{
-	/**/				*result = NULL;
-	/**/			}
+	/**/			/* ************************* ITEM NOT FOUND ************************* */
 	/**/
 	/**/			pthread_mutex_unlock(&hash_table->mutex);
 	/**/
@@ -266,7 +281,7 @@ bool bigbox_hash_table_del_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	/**/
 	/**/		/*-------------------------------------------------*/
 	/**/
-	/**/		item = (prev = item)->table_next;
+	/**/		hash_table_item = hash_table_item->table_next;
 	/**/
 	/**/		/*-------------------------------------------------*/
 	/**/	}
@@ -276,11 +291,11 @@ bool bigbox_hash_table_del_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 
 /*-------------------------------------------------------------------------*/
 
-bool bigbox_hash_table_del(bigbox_hash_table_t *hash_table, const char *key, bigbox_hash_table_item_t **result)
+bool bigbox_hash_table_del(bigbox_hash_table_t *hash_table, const char *key)
 {
 	uint64_t hash = bigbox_hash(key, strlen(key), SEED1, SEED2);
 
-	return bigbox_hash_table_del_by_hash(hash_table, hash, result);
+	return bigbox_hash_table_del_by_hash(hash_table, hash);
 }
 
 /*-------------------------------------------------------------------------*/

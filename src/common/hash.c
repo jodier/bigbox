@@ -57,6 +57,7 @@ static __inline__ uint64_t rotl(uint64_t x, uint64_t b) /* will be optimized by 
 		v1 = rotl(v1, 17);                                          \
 		v1 ^= v2;                                                   \
 		v2 = rotl(v2, 32);                                          \
+		                                                            \
 	} while(0)
 
 /*-------------------------------------------------------------------------*/
