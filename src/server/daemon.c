@@ -61,9 +61,9 @@ static bigbox_pooler_ctx_t pooler_ctx;
 
 /*-------------------------------------------------------------------------*/
 
-void __exit(int signal)
+static void __exit(int signal)
 {
-	printf("stopping bigbox...\n");
+	printf("\nStopping bigbox...\n");
 
 	pooler_ctx.alive = 0;
 
