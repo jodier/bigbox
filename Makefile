@@ -7,13 +7,15 @@ all:
 	gcc -O3 -Wall -c -o src/common/hash.o src/common/hash.c
 	gcc -O3 -Wall -c -o src/common/hash_table.o src/common/hash_table.c
 	gcc -O3 -Wall -c -o src/common/log.o src/common/log.c
+	gcc -O3 -Wall -c -o src/common/loop/http.o src/common/loop/http.c
+	gcc -O3 -Wall -c -o src/common/loop/tcp.o src/common/loop/tcp.c
 	gcc -O3 -Wall -c -o src/common/rio.o src/common/rio.c
 	gcc -O3 -Wall -c -o src/common/server.o src/common/server.c
 	gcc -O3 -Wall -c -o src/common/server_pooler.o src/common/server_pooler.c
 
 	mkdir -p lib
 
-	ar rcs lib/libbigbox-common.a src/common/*.o
+	ar rcs lib/libbigbox-common.a src/common/*.o src/common/loop/*.o
 
 	#####################################################################
 	# SERVER                                                            #

@@ -45,6 +45,12 @@
 #define BUFF_t const void *
 
 /*-------------------------------------------------------------------------*/
+/* VERSION                                                                 */
+/*-------------------------------------------------------------------------*/
+
+#define BIGBOX_VERSION "1.0.0"
+
+/*-------------------------------------------------------------------------*/
 /* LOG                                                                     */
 /*-------------------------------------------------------------------------*/
 
@@ -270,46 +276,6 @@ bool bigbox_hash_table_del(
 );
 
 /*-------------------------------------------------------------------------*/
-/* BASIC CLIENT                                                            */
-/*-------------------------------------------------------------------------*/
-
-void bigbox_client_initialize(
-	struct bigbox_client_s *ctx
-);
-
-void bigbox_client_finalize(
-	struct bigbox_client_s *ctx
-);
-
-/*-------------------------------------------------------------------------*/
-
-int bigbox_client_connect(
-	struct bigbox_client_s *ctx,
-	const char *host,
-	uint16_t port
-);
-
-/*-------------------------------------------------------------------------*/
-/* BASIC SERVER                                                            */
-/*-------------------------------------------------------------------------*/
-
-void bigbox_server_initialize(
-	struct bigbox_server_ctx_s *ctx
-);
-
-void bigbox_server_finalize(
-	struct bigbox_server_ctx_s *ctx
-);
-
-/*-------------------------------------------------------------------------*/
-
-int bigbox_server_listen(
-	struct bigbox_server_ctx_s *ctx,
-	int port,
-	int backlog
-);
-
-/*-------------------------------------------------------------------------*/
 /* ROBUST I/O                                                              */
 /*-------------------------------------------------------------------------*/
 
@@ -341,6 +307,86 @@ ssize_t bigbox_rio_write(
 
 int bigbox_rio_close(
 	int sock
+);
+
+/*-------------------------------------------------------------------------*/
+/* BASIC TCP CLIENT                                                        */
+/*-------------------------------------------------------------------------*/
+
+void bigbox_client_initialize(
+	struct bigbox_client_s *ctx
+);
+
+void bigbox_client_finalize(
+	struct bigbox_client_s *ctx
+);
+
+/*-------------------------------------------------------------------------*/
+
+int bigbox_client_connect(
+	struct bigbox_client_s *ctx,
+	const char *host,
+	uint16_t port
+);
+
+/*-------------------------------------------------------------------------*/
+/* BASIC TCP SERVER                                                        */
+/*-------------------------------------------------------------------------*/
+
+void bigbox_server_initialize(
+	struct bigbox_server_ctx_s *ctx
+);
+
+void bigbox_server_finalize(
+	struct bigbox_server_ctx_s *ctx
+);
+
+/*-------------------------------------------------------------------------*/
+
+int bigbox_server_listen(
+	struct bigbox_server_ctx_s *ctx,
+	int port,
+	int backlog
+);
+
+/*-------------------------------------------------------------------------*/
+/* HIGH LEVEL SERVERS                                                      */
+/*-------------------------------------------------------------------------*/
+
+#define SVR_HTTP_METHOD_UNKNOWN	0
+#define SVR_HTTP_METHOD_GET	1
+#define SVR_HTTP_METHOD_POST	2
+
+/*-------------------------------------------------------------------------*/
+
+typedef struct bigbox_http_arg_s
+{
+	const char *name;
+	const char *value;
+
+} bigbox_http_arg_t;
+
+/*-------------------------------------------------------------------------*/
+
+typedef void (* bigbox_tcp_handler_ptr_t)(
+	int client_sock
+);
+
+/*-------------------------------------------------------------------------*/
+
+typedef void (* bigbox_http_handler_ptr_t)(
+
+	const char **content_type,
+	buff_t *content_buff,
+	size_t *content_size,
+	int *free_content,
+
+	int method,
+
+	size_t nb_of_args,
+	bigbox_http_arg_t arg_array[],
+
+	const char *path
 );
 
 /*-------------------------------------------------------------------------*/

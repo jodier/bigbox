@@ -33,7 +33,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
+#if !defined(_WIN32) && !defined(_WIN64)
+  #include <sys/socket.h>
+#else
+  #include <winsock2.h>
+#endif
+
+
+#include "../internal.h"
 
 /*-------------------------------------------------------------------------*/
 
@@ -97,7 +104,7 @@ static char *__decode_uri(char *s)
 
 /*-------------------------------------------------------------------------*/
 
-static size_t __deserialize_args(svr_arg_t arg_array[], char *s)
+static size_t __deserialize_args(bigbox_http_arg_t arg_array[], char *s)
 {
 	char *lasts;
 
@@ -171,7 +178,7 @@ static ssize_t __readline(int sock, char *buffer, size_t size)
 
 /*-------------------------------------------------------------------------*/
 
-static void __loop_handler(svr_thread_t *thread)
+static void __loop_handler(bigbox_server_thread_t *thread)
 {
 	char buffer[2048], path[2048], content_length[1024], origin[1024];
 
@@ -203,7 +210,7 @@ static void __loop_handler(svr_thread_t *thread)
 
 		if(size < 0)
 		{
-			log(LOG_TYPE_ERROR, "could not read header!\n");
+			bigbox_log(LOG_TYPE_ERROR, "could not read header!\n");
 
 			return;
 		}
@@ -282,7 +289,7 @@ static void __loop_handler(svr_thread_t *thread)
 
 		size_t nb_of_args = 0;
 
-		svr_arg_t arg_array[128];
+		bigbox_http_arg_t arg_array[128];
 
 		/*---------------------------------------------------------*/
 		/*                                                         */
@@ -331,7 +338,7 @@ static void __loop_handler(svr_thread_t *thread)
 			}
 			else
 			{
-				log(LOG_TYPE_ERROR, "out of memory!\n");
+				bigbox_log(LOG_TYPE_ERROR, "out of memory!\n");
 			}
 
 			/*-------------------------------------------------*/
@@ -347,7 +354,7 @@ static void __loop_handler(svr_thread_t *thread)
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		((svr_http_handler_ptr_t) thread->user_handler_ptr)(
+		((bigbox_http_handler_ptr_t) thread->user_handler_ptr)(
 			&content_type,
 			&content_buff,
 			&content_size,
@@ -387,11 +394,11 @@ static void __loop_handler(svr_thread_t *thread)
 		origin
 	);
 
-	ret = rio_write(thread->client_sock, buffer, strlen(buffer));
+	ret = bigbox_rio_write(thread->client_sock, buffer, strlen(buffer));
 
 	if(ret < 0)
 	{
-		log(LOG_TYPE_ERROR, "could not send data!\n");
+		bigbox_log(LOG_TYPE_ERROR, "could not send data!\n");
 	}
 
 	/*-----------------------------------------------------------------*/
@@ -402,11 +409,11 @@ static void __loop_handler(svr_thread_t *thread)
 	   &&
 	   content_size != 0x00
 	 ) {
-		ret = rio_write(thread->client_sock, content_buff, content_size);
+		ret = bigbox_rio_write(thread->client_sock, content_buff, content_size);
 
 		if(ret < 0)
 		{
-			log(LOG_TYPE_ERROR, "could not send data!\n");
+			bigbox_log(LOG_TYPE_ERROR, "could not send data!\n");
 		}
 
 		if(free_content != 0)
@@ -420,9 +427,9 @@ static void __loop_handler(svr_thread_t *thread)
 
 /*-------------------------------------------------------------------------*/
 
-void svr_http_loop(svr_server_ctx_t *server_ctx, svr_pooler_ctx_t *pooler_ctx, svr_http_handler_ptr_t handler_ptr, int nb_of_threads)
+void bigbox_http_loop(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *pooler_ctx, bigbox_http_handler_ptr_t handler_ptr, int nb_of_threads)
 {
-	svr_pooler(server_ctx, pooler_ctx, __loop_handler, handler_ptr, nb_of_threads);
+	bigbox_server_pooler(server_ctx, pooler_ctx, __loop_handler, handler_ptr, nb_of_threads);
 }
 
 /*-------------------------------------------------------------------------*/

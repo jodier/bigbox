@@ -33,34 +33,67 @@
 
 /*-------------------------------------------------------------------------*/
 
+#define BIGBOX_DEFAULT_DIM 4096
+#define BIGBOX_DEFAULT_PORT 6969
+
+/*-------------------------------------------------------------------------*/
+
+static void version(void)
+{
+	printf("%s\n", BIGBOX_VERSION);
+}
+
+/*-------------------------------------------------------------------------*/
+
+static void help(const char *program_name, size_t default_dim, uint32_t default_port)
+{
+
+}
+
+/*-------------------------------------------------------------------------*/
+
 int main(int argc, char **argv)
 {
 	/*-----------------------------------------------------------------*/
 
-	int port = 6969, c;
+	size_t dim = BIGBOX_DEFAULT_DIM;
+
+	uint32_t port = BIGBOX_DEFAULT_PORT;
 
 	static struct option long_options[] = {
+		{"dim", 1, 0, 'd'},
 		{"port", 1, 0, 'p'},
 		{"version", 0, 0, 'v'},
 		{"help", 0, 0, 'h'},
 		{NULL, 0, NULL, 0}
 	};
 
-	while((c = getopt_long(argc, argv, "p:vh", long_options, NULL)) != -1)
+	/*-----------------------------------------------------------------*/
+
+	int c;
+
+	while((c = getopt_long(argc, argv, "dp:vh", long_options, NULL)) != -1)
 	{
 		switch(c)
 		{
+			case 'd':
+				dim = strtoul(optarg, NULL, 0);
+				break;
+
 			case 'p':
-				port = atoi(optarg);
+				port = strtoul(optarg, NULL, 0);
 				break;
 
 			case 'v':
+				version();
 				return 0;
 
 			case 'h':
+				help(argv[0], BIGBOX_DEFAULT_DIM, BIGBOX_DEFAULT_PORT);
 				return 0;
 
 			default:
+				help(argv[0], BIGBOX_DEFAULT_DIM, BIGBOX_DEFAULT_PORT);
 				return 1;
 		}
 	}
@@ -69,10 +102,21 @@ int main(int argc, char **argv)
 
 	printf("Starting BigBox on port %d...\n", port);
 
-	printf("%llx\n", bigbox_hash("Hello World!", 12, 0, 0));
-	printf("%llx\n", bigbox_hash("Hello World?", 12, 0, 0));
-	printf("%llx\n", bigbox_hash("Hello World!", 12, 110, 220));
-	printf("%llx\n", bigbox_hash("Hello World?", 12, 110, 220));
+	/*-----------------------------------------------------------------*/
+
+	bigbox_hash_table_t hash_table;
+
+	if(bigbox_hash_table_initialize(&hash_table, dim) == false)
+	{
+		bigbox_log(LOG_TYPE_FATAL, "could not initialize DB!\n");
+	}
+
+	/*-----------------------------------------------------------------*/
+
+
+	/*-----------------------------------------------------------------*/
+
+	printf("Bye...\n");
 
 	/*-----------------------------------------------------------------*/
 
