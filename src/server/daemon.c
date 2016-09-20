@@ -150,23 +150,21 @@ int main(int argc, char **argv)
 	/*-----------------------------------------------------------------*/
 
 	signal(SIGINT, __exit);
-	signal(SIGINT, __exit);
 
 	/*-----------------------------------------------------------------*/
 
 	bigbox_server_initialize(&server_ctx);
 
-	int ret = bigbox_server_listen(&server_ctx, port, 100);
-
-	if(ret < 0)
+	if(bigbox_server_listen(&server_ctx, port, 100) < 0)
 	{
 		bigbox_server_finalize(&server_ctx);
+
+		bigbox_hash_table_finalize(&hash_table);
 
 		bigbox_log(LOG_TYPE_FATAL, "%s!\n", strerror(errno));
 	}
 
 	bigbox_http_loop(&server_ctx, &pooler_ctx, http_handler, 100);
-
 
 	/*-----------------------------------------------------------------*/
 
