@@ -184,9 +184,11 @@ bool bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 
 	/*-----------------------------------------------------------------*/
 
+	int i = 0;
+
 	pthread_mutex_lock(&hash_table->mutex);
 
-	/**/	for(int i = 0;; i++)
+	/**/	for(;; i++)
 	/**/	{
 	/**/		/*-------------------------------------------------*/
 	/**/
@@ -253,9 +255,11 @@ bool bigbox_hash_table_del_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 
 	/*-----------------------------------------------------------------*/
 
+	int i = 0;
+
 	pthread_mutex_lock(&hash_table->mutex);
 
-	/**/	for(int i = 0;; i++)
+	/**/	for(;; i++)
 	/**/	{
 	/**/		/*-------------------------------------------------*/
 	/**/
