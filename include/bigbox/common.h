@@ -206,12 +206,12 @@ uint64_t bigbox_hash(
 /* HASH TABLE                                                              */
 /*-------------------------------------------------------------------------*/
 
-bool bigbox_hash_table_init(
+bool bigbox_hash_table_initialize(
 	struct bigbox_hash_table_s *hash_table,
 	size_t dim
 );
 
-void bigbox_hash_table_final(
+void bigbox_hash_table_finalize(
 	struct bigbox_hash_table_s *hash_table
 );
 

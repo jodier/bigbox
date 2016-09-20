@@ -37,7 +37,7 @@
 
 /*-------------------------------------------------------------------------*/
 
-bool bigbox_hash_table_init(bigbox_hash_table_t *hash_table, size_t dim)
+bool bigbox_hash_table_initialize(bigbox_hash_table_t *hash_table, size_t dim)
 {
 	size_t size = dim * sizeof(buff_t);
 
@@ -63,7 +63,7 @@ bool bigbox_hash_table_init(bigbox_hash_table_t *hash_table, size_t dim)
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_hash_table_final(bigbox_hash_table_t *hash_table)
+void bigbox_hash_table_finalize(bigbox_hash_table_t *hash_table)
 {
 	/*-----------------------------------------------------------------*/
 	/*                                                                 */
