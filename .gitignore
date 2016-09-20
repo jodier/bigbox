@@ -1,0 +1,12 @@
+*.o
+
+*.lib
+*.a
+
+*.dll
+*.so
+*.so.*
+*.dylib
+
+.DS_Store
+.DS_Store?
