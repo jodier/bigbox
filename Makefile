@@ -23,7 +23,7 @@ all:
 
 	gcc -O3 -Wall -c -o src/server/daemon.o src/server/daemon.c
 
-	gcc -L lib -o bigbox-server src/server/*.o -lbigbox-common
+	gcc -L lib -o bigbox-server src/server/*.o -lbigbox-common -lpthread
 
 	#####################################################################
 	# CLIENT                                                            #
