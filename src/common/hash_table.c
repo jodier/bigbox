@@ -246,11 +246,11 @@ bool bigbox_hash_table_del_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	/**/		{
 	/**/			/*-----------------------------------------*/
 	/**/
-	/**/			/* NOT FOUND, NOT FOUND, NOT FOUND, NOT FOUND, NOT FOUND, NOT FOUND */
+	/**/			/* NOT FOUND, NOT FOUND, NOT FOUND, NOT FOUND, NOT FOUND, NOT FOUND */;
 	/**/
-	/**/			/* NOT FOUND, NOT FOUND, NOT FOUND */
+	/**/			/* NOT FOUND, NOT FOUND, NOT FOUND */;
 	/**/
-	/**/			/* NOT FOUND, NOT FOUND */
+	/**/			/* NOT FOUND, NOT FOUND */;
 	/**/
 	/**/			/*-----------------------------------------*/
 	/**/
