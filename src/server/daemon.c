@@ -44,7 +44,7 @@ static void version(void)
 
 static void help(const char *program_name, size_t default_dim, uint32_t default_port)
 {
-
+	printf("%s %zu %u\n", program_name, default_dim, default_port);
 }
 
 /*-------------------------------------------------------------------------*/
