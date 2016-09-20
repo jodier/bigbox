@@ -34,6 +34,7 @@
 struct bigbox_hash_table_item_s
 {
 	uint64_t hash;
+	uint32_t xxxx;
 
 	buff_t buff;
 	size_t size;
