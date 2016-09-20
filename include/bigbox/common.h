@@ -64,6 +64,23 @@ typedef enum log_type_e
 /* HASH_TABLE                                                              */
 /*-------------------------------------------------------------------------*/
 
+typedef struct bigbox_hash_table_item_s
+{
+	uint64_t hash;
+	uint32_t xxxx;
+
+	buff_t buff;
+	size_t size;
+
+	struct bigbox_hash_table_item_s *list_prev;
+	struct bigbox_hash_table_item_s *list_next;
+
+	struct bigbox_hash_table_item_s *table_next;
+
+} bigbox_hash_table_item_t;
+
+/*-------------------------------------------------------------------------*/
+
 typedef struct bigbox_hash_table_s
 {
 	int dim;
@@ -192,6 +209,54 @@ uint64_t bigbox_hash(
 bool bigbox_hash_table_init(
 	struct bigbox_hash_table_s *hash_table,
 	size_t dim
+);
+
+void bigbox_hash_table_final(
+	struct bigbox_hash_table_s *hash_table
+);
+
+/*-------------------------------------------------------------------------*/
+
+bool bigbox_hash_table_put_by_hash(
+	struct bigbox_hash_table_s *hash_table,
+	uint64_t hash,
+	buff_t buff,
+	size_t size
+);
+
+bool bigbox_hash_table_put(
+	struct bigbox_hash_table_s *has_table,
+	const char *key,
+	buff_t buff,
+	size_t size
+);
+
+/**/
+
+bool bigbox_hash_table_get_by_hash(
+	struct bigbox_hash_table_s *hash_table,
+	uint64_t hash,
+	struct bigbox_hash_table_item_s **result
+);
+
+bool bigbox_hash_table_get(
+	struct bigbox_hash_table_s *hash_table,
+	const char *key,
+	struct bigbox_hash_table_item_s **result
+);
+
+/**/
+
+bool bigbox_hash_table_del_by_hash(
+	struct bigbox_hash_table_s *hash_table,
+	uint64_t hash,
+	struct bigbox_hash_table_item_s **result
+);
+
+bool bigbox_hash_table_del(
+	struct bigbox_hash_table_s *hash_table,
+	const char *key,
+	struct bigbox_hash_table_item_s **result
 );
 
 /*-------------------------------------------------------------------------*/

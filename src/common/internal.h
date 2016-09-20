@@ -33,24 +33,6 @@
 /*                                                                         */
 /*-------------------------------------------------------------------------*/
 
-struct bigbox_hash_table_item_s
-{
-	uint64_t hash;
-	uint32_t xxxx;
-
-	buff_t buff;
-	size_t size;
-
-	struct bigbox_hash_table_item_s *list_prev;
-	struct bigbox_hash_table_item_s *list_next;
-
-	struct bigbox_hash_table_item_s *table_next;
-};
-
-/*-------------------------------------------------------------------------*/
-/*                                                                         */
-/*-------------------------------------------------------------------------*/
-
 #define closesocket(s) \
 		close(s)
 
