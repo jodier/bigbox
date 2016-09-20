@@ -25,16 +25,13 @@
 
 /*-------------------------------------------------------------------------*/
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <string.h>
 
 #include "internal.h"
-
-/*-------------------------------------------------------------------------*/
-
-#define BIGBOX_DEFAULT_DIM 4096
-#define BIGBOX_DEFAULT_PORT 6969
 
 /*-------------------------------------------------------------------------*/
 
@@ -48,6 +45,47 @@ static void version(void)
 static void help(const char *program_name, size_t default_dim, uint32_t default_port)
 {
 
+}
+
+/*-------------------------------------------------------------------------*/
+
+#define BIGBOX_DEFAULT_DIM 4096
+#define BIGBOX_DEFAULT_PORT 6969
+
+/*-------------------------------------------------------------------------*/
+
+static bigbox_hash_table_t hash_table;
+static bigbox_server_ctx_t server_ctx;
+static bigbox_pooler_ctx_t pooler_ctx;
+
+/*-------------------------------------------------------------------------*/
+
+void __exit(int signal)
+{
+	printf("stopping bigbox...\n");
+
+	pooler_ctx.alive = 0;
+
+	if(bigbox_server_finalize(&server_ctx) < 0)
+	{
+		bigbox_log(LOG_TYPE_ERROR, "could not finalize server!\n");
+	}
+
+	if(bigbox_hash_table_finalize(&hash_table) == false)
+	{
+		bigbox_log(LOG_TYPE_ERROR, "could not finalize hash table!\n");
+	}
+}
+
+/*-------------------------------------------------------------------------*/
+
+static void http_handler(const char **content_type, buff_t *content_buff, size_t *content_size, int *free_content, int method, size_t nb_of_args, bigbox_http_arg_t arg_array[], const char *path)
+{
+	char *p = "<html><body>Hello World!</body></html>";
+
+	*content_buff = /****/(p);
+	*content_size = strlen(p);
+	*free_content = 0;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -104,14 +142,30 @@ int main(int argc, char **argv)
 
 	/*-----------------------------------------------------------------*/
 
-	bigbox_hash_table_t hash_table;
-
 	if(bigbox_hash_table_initialize(&hash_table, dim) == false)
 	{
 		bigbox_log(LOG_TYPE_FATAL, "could not initialize DB!\n");
 	}
 
 	/*-----------------------------------------------------------------*/
+
+	signal(SIGINT, __exit);
+	signal(SIGINT, __exit);
+
+	/*-----------------------------------------------------------------*/
+
+	bigbox_server_initialize(&server_ctx);
+
+	int ret = bigbox_server_listen(&server_ctx, port, 100);
+
+	if(ret < 0)
+	{
+		bigbox_server_finalize(&server_ctx);
+
+		bigbox_log(LOG_TYPE_FATAL, "%s!\n", strerror(errno));
+	}
+
+	bigbox_http_loop(&server_ctx, &pooler_ctx, http_handler, 100);
 
 
 	/*-----------------------------------------------------------------*/

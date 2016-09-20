@@ -151,6 +151,8 @@ typedef struct bigbox_server_ctx_s
 	((server_ctx)->nr)
 
 /*-------------------------------------------------------------------------*/
+/* BASIC POOLER                                                            */
+/*-------------------------------------------------------------------------*/
 
 typedef struct bigbox_pooler_ctx_s
 {
@@ -170,6 +172,46 @@ typedef struct bigbox_pooler_ctx_s
 	/*-----------------------------------------------------------------*/
 
 } bigbox_pooler_ctx_t;
+
+/*-------------------------------------------------------------------------*/
+/* HIGH LEVEL SERVERS                                                      */
+/*-------------------------------------------------------------------------*/
+
+#define SVR_HTTP_METHOD_UNKNOWN	0
+#define SVR_HTTP_METHOD_GET	1
+#define SVR_HTTP_METHOD_POST	2
+
+/*-------------------------------------------------------------------------*/
+
+typedef struct bigbox_http_arg_s
+{
+	const char *name;
+	const char *value;
+
+} bigbox_http_arg_t;
+
+/*-------------------------------------------------------------------------*/
+
+typedef void (* bigbox_tcp_handler_ptr_t)(
+	int client_sock
+);
+
+/*-------------------------------------------------------------------------*/
+
+typedef void (* bigbox_http_handler_ptr_t)(
+
+	const char **content_type,
+	buff_t *content_buff,
+	size_t *content_size,
+	int *free_content,
+
+	int method,
+
+	size_t nb_of_args,
+	bigbox_http_arg_t arg_array[],
+
+	const char *path
+);
 
 /*-------------------------------------------------------------------------*/
 
@@ -220,7 +262,7 @@ bool bigbox_hash_table_initialize(
 	size_t dim
 );
 
-void bigbox_hash_table_finalize(
+bool bigbox_hash_table_finalize(
 	struct bigbox_hash_table_s *hash_table
 );
 
@@ -317,7 +359,7 @@ void bigbox_client_initialize(
 	struct bigbox_client_s *ctx
 );
 
-void bigbox_client_finalize(
+int bigbox_client_finalize(
 	struct bigbox_client_s *ctx
 );
 
@@ -337,7 +379,7 @@ void bigbox_server_initialize(
 	struct bigbox_server_ctx_s *ctx
 );
 
-void bigbox_server_finalize(
+int bigbox_server_finalize(
 	struct bigbox_server_ctx_s *ctx
 );
 
@@ -353,40 +395,18 @@ int bigbox_server_listen(
 /* HIGH LEVEL SERVERS                                                      */
 /*-------------------------------------------------------------------------*/
 
-#define SVR_HTTP_METHOD_UNKNOWN	0
-#define SVR_HTTP_METHOD_GET	1
-#define SVR_HTTP_METHOD_POST	2
-
-/*-------------------------------------------------------------------------*/
-
-typedef struct bigbox_http_arg_s
-{
-	const char *name;
-	const char *value;
-
-} bigbox_http_arg_t;
-
-/*-------------------------------------------------------------------------*/
-
-typedef void (* bigbox_tcp_handler_ptr_t)(
-	int client_sock
+void bigbox_tcp_loop(
+	struct bigbox_server_ctx_s *server_ctx,
+	struct bigbox_pooler_ctx_s *pooler_ctx,
+	bigbox_tcp_handler_ptr_t handler_ptr,
+	int nb_of_threads
 );
 
-/*-------------------------------------------------------------------------*/
-
-typedef void (* bigbox_http_handler_ptr_t)(
-
-	const char **content_type,
-	buff_t *content_buff,
-	size_t *content_size,
-	int *free_content,
-
-	int method,
-
-	size_t nb_of_args,
-	bigbox_http_arg_t arg_array[],
-
-	const char *path
+void bigbox_http_loop(
+	struct bigbox_server_ctx_s *server_ctx,
+	struct bigbox_pooler_ctx_s *http_ctx,
+	bigbox_http_handler_ptr_t handler_ptr,
+	int nb_of_threads
 );
 
 /*-------------------------------------------------------------------------*/

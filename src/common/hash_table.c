@@ -63,7 +63,7 @@ bool bigbox_hash_table_initialize(bigbox_hash_table_t *hash_table, size_t dim)
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_hash_table_finalize(bigbox_hash_table_t *hash_table)
+bool bigbox_hash_table_finalize(bigbox_hash_table_t *hash_table)
 {
 	/*-----------------------------------------------------------------*/
 
@@ -88,6 +88,8 @@ void bigbox_hash_table_finalize(bigbox_hash_table_t *hash_table)
 	}
 
 	/*-----------------------------------------------------------------*/
+	
+	return true;
 }
 
 /*-------------------------------------------------------------------------*/

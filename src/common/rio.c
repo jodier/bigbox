@@ -83,7 +83,7 @@ __loop:
 		}
 		else
 		{
-			return -1;
+			return -errno;
 		}
 	}
 
@@ -111,7 +111,7 @@ __loop:
 		}
 		else
 		{
-			return -1;
+			return -errno;
 		}
 	}
 
@@ -122,22 +122,17 @@ __loop:
 
 int bigbox_rio_close(int sock)
 {
-	int ret = 0;
-
 	if(sock >= 0)
 	{
-		if(shutdown(sock, SHUT_RDWR) < 0)
-		{
-			ret = -1;
-		}
+		shutdown(
+			sock,
+			SHUT_RDWR
+		);
 
-		if(closesocket(sock) < 0)
-		{
-			ret = -1;
-		}
+		return closesocket(sock);
 	}
 
-	return ret;
+	return 0;
 }
 
 /*-------------------------------------------------------------------------*/

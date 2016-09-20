@@ -36,4 +36,4 @@ all:
 	#####################################################################
 
 clean:
-	rm -fr src/common/*.o src/server/*.o src/client/*.o bigbox-server bigbox-cli
+	rm -fr src/common/*.o src/server/*.o src/client/*.o lib/*.a bigbox-server bigbox-cli

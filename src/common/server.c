@@ -48,9 +48,11 @@ void bigbox_server_initialize(bigbox_server_ctx_t *server_ctx)
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_server_finalize(bigbox_server_ctx_t *ctx)
+int bigbox_server_finalize(bigbox_server_ctx_t *server_ctx)
 {
-	bigbox_rio_close(ctx->sock);
+	return server_ctx->sock >= 0 ? bigbox_rio_close(server_ctx->sock)
+	                             : 0
+	;
 }
 
 /*-------------------------------------------------------------------------*/
