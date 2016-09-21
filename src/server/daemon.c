@@ -34,6 +34,8 @@
 
 #include "internal.h"
 
+#include "html/index.h"
+
 /*-------------------------------------------------------------------------*/
 
 static void version(void)
@@ -80,13 +82,46 @@ static void __exit(int signal)
 
 /*-------------------------------------------------------------------------*/
 
-static void http_handler(const char **content_type, buff_t *content_buff, size_t *content_size, int *free_content, int method, size_t nb_of_args, bigbox_http_arg_t arg_array[], const char *path)
+static void _retain(void *arg)
 {
-	char *p = "<html><body>Hello World!</body></html>";
+	//printf("%s\n", (const char *) arg);
+}
 
-	*content_buff = /****/(p);
-	*content_size = strlen(p);
-	*free_content = 0;
+/*-------------------------------------------------------------------------*/
+
+static void http_handler(const char **content_type, buff_t *content_buff, size_t *content_size, void (** post_handler)(void *), void **post_handler_arg, int method, size_t nb_of_args, bigbox_http_arg_t arg_array[], const char *path)
+{
+	/**/ if(strcmp(path, "/") == 0)
+	{
+		*content_type = "text/html";
+		*content_buff = index_html_buff;
+		*content_size = INDEX_HTML_SIZE;
+	}
+	else if(strncmp(path, "/key/", 5) == 0)
+	{
+		bigbox_hash_table_item_t *hash_table_item;
+
+		if(bigbox_hash_table_get(&hash_table, path + 5, &hash_table_item))
+		{
+			*content_buff = hash_table_item->buff;
+			*content_size = hash_table_item->size;
+
+			*post_handler = _retain;
+			*post_handler_arg = &hash_table_item;
+		}
+		else
+		{
+			*content_buff = NULL;
+			*content_size = 0x00;
+		}
+	}
+	else
+	{
+		char *p = "invalid request";
+
+		*content_buff = /****/(p);
+		*content_size = strlen(p);
+	}
 }
 
 /*-------------------------------------------------------------------------*/
@@ -147,6 +182,8 @@ int main(int argc, char **argv)
 	{
 		bigbox_log(LOG_TYPE_FATAL, "could not initialize DB!\n");
 	}
+
+	bigbox_hash_table_put(&hash_table, "rioi", "Hello World!", 12, 1000000);
 
 	/*-----------------------------------------------------------------*/
 

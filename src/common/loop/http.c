@@ -222,7 +222,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		/*---------------------------------------------------------*/
 
-		if(strncmp(buffer, "GET ", 4) == 0)
+		/**/ if(strncmp(buffer, "GET ", 4) == 0)
 		{
 			p = strstr(buffer, " HTTP");
 
@@ -238,7 +238,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		/*---------------------------------------------------------*/
 
-		if(strncmp(buffer, "POST ", 5) == 0)
+		else if(strncmp(buffer, "POST ", 5) == 0)
 		{
 			p = strstr(buffer, " HTTP");
 
@@ -254,14 +254,46 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		/*---------------------------------------------------------*/
 
-		if(strncmp(buffer, "Content-Length: ", 16) == 0)
+		else if(strncmp(buffer, "PUT ", 4) == 0)
+		{
+			p = strstr(buffer, " HTTP");
+
+			if(p != NULL)
+			{
+				*p = '\0';
+
+				strcpy(path, buffer + 4);
+
+				method = SVR_HTTP_METHOD_PUT;
+			}
+		}
+
+		/*---------------------------------------------------------*/
+
+		else if(strncmp(buffer, "DELETE ", 7) == 0)
+		{
+			p = strstr(buffer, " HTTP");
+
+			if(p != NULL)
+			{
+				*p = '\0';
+
+				strcpy(path, buffer + 7);
+
+				method = SVR_HTTP_METHOD_PUT;
+			}
+		}
+
+		/*---------------------------------------------------------*/
+
+		else if(strncmp(buffer, "Content-Length: ", 16) == 0)
 		{
 			strcpy(content_length, buffer + 16);
 		}
 
 		/*---------------------------------------------------------*/
 
-		if(strncmp(buffer, "Origin: ", 8) == 0)
+		else if(strncmp(buffer, "Origin: ", 8) == 0)
 		{
 			strcpy(origin, buffer + 8);
 		}
@@ -278,14 +310,16 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	buff_t content_buff = NULL;
 	size_t content_size = 0x00;
 
-	int free_content = 0;
+	void (* post_handler)(void *) = NULL;
+
+	void *post_handler_arg = NULL;
 
 	/*-----------------------------------------------------------------*/
 
 	if(thread->user_handler_ptr != NULL)
 	{
-		char *GET = NULL;
-		char *POST = NULL;
+		char *PARAMS = NULL;
+		char *CONTENT = NULL;
 
 		size_t nb_of_args = 0;
 
@@ -295,13 +329,13 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		GET = strchr(path, '?');
+		PARAMS = strchr(path, '?');
 
-		if(GET != NULL)
+		if(PARAMS != NULL)
 		{
-			*GET++ = '\0';
+			*PARAMS++ = '\0';
 
-			nb_of_args += __deserialize_args(&arg_array[nb_of_args], GET);
+			nb_of_args += __deserialize_args(&arg_array[nb_of_args], PARAMS);
 		}
 
 		/*---------------------------------------------------------*/
@@ -318,19 +352,19 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 			/*                                                 */
 			/*-------------------------------------------------*/
 
-			POST = (char *) malloc(__content_length + 1);
+			CONTENT = (char *) malloc(__content_length + 1);
 
 			/*-------------------------------------------------*/
 			/*                                                 */
 			/*-------------------------------------------------*/
 
-			if(POST != NULL)
+			if(CONTENT != NULL)
 			{
 				int i;
 
 				for(i = 0; i < __content_length; i++)
 				{
-					if(recv(thread->client_sock, &POST[i], 1, 0) != 1)
+					if(recv(thread->client_sock, &CONTENT[i], 1, 0) != 1)
 					{
 						break;
 					}
@@ -345,7 +379,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 			/*                                                 */
 			/*-------------------------------------------------*/
 
-			nb_of_args += __deserialize_args(&arg_array[nb_of_args], POST);
+			nb_of_args += __deserialize_args(&arg_array[nb_of_args], CONTENT);
 
 			/*-------------------------------------------------*/
 		}
@@ -358,7 +392,8 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 			&content_type,
 			&content_buff,
 			&content_size,
-			&free_content,
+			&post_handler,
+			&post_handler_arg,
 			method,
 			nb_of_args,
 			arg_array,
@@ -369,9 +404,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		if(POST != NULL)
+		if(CONTENT != NULL)
 		{
-			free((void *) POST);
+			free((void *) CONTENT);
 		}
 
 		/*---------------------------------------------------------*/
@@ -415,11 +450,15 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		{
 			bigbox_log(LOG_TYPE_ERROR, "could not send data!\n");
 		}
+	}
 
-		if(free_content != 0)
-		{
-			free(content_buff);
-		}
+	/*-----------------------------------------------------------------*/
+	/*                                                                 */
+	/*-----------------------------------------------------------------*/
+
+	if(post_handler != NULL)
+	{
+		post_handler(post_handler_arg);
 	}
 
 	/*-----------------------------------------------------------------*/

@@ -180,6 +180,8 @@ typedef struct bigbox_pooler_ctx_s
 #define SVR_HTTP_METHOD_UNKNOWN	0
 #define SVR_HTTP_METHOD_GET	1
 #define SVR_HTTP_METHOD_POST	2
+#define SVR_HTTP_METHOD_PUT	3
+#define SVR_HTTP_METHOD_DELETE	4
 
 /*-------------------------------------------------------------------------*/
 
@@ -203,7 +205,9 @@ typedef void (* bigbox_http_handler_ptr_t)(
 	const char **content_type,
 	buff_t *content_buff,
 	size_t *content_size,
-	int *free_content,
+
+	void (** post_handler)(void *),
+	void **post_handler_arg,
 
 	int method,
 
