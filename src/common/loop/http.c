@@ -180,9 +180,9 @@ static ssize_t __readline(int sock, char *buffer, size_t size)
 
 static void __loop_handler(bigbox_server_thread_t *thread)
 {
-	char buffer[2048], path[2048], content_length[1024], origin[1024];
+	char buffer[2048], in_path[2048], in_content_length[1024], in_content_type[1024], in_origin[1024];
 
-	int method = SVR_HTTP_METHOD_UNKNOWN;
+	int in_method = SVR_HTTP_METHOD_UNKNOWN;
 
 	register char *p;
 
@@ -194,9 +194,10 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	/*                                                                 */
 	/*-----------------------------------------------------------------*/
 
-	path[0] = '\0';
-	content_length[0] = '\0';
-	origin[0] = '\0';
+	in_path[0] = '\0';
+	in_content_length[0] = '\0';
+	in_content_type[0] = '\0';
+	in_origin[0] = '\0';
 
 	/*-----------------------------------------------------------------*/
 	/*                                                                 */
@@ -230,9 +231,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 			{
 				*p = '\0';
 
-				strcpy(path, buffer + 4);
+				strcpy(in_path, buffer + 4);
 
-				method = SVR_HTTP_METHOD_GET;
+				in_method = SVR_HTTP_METHOD_GET;
 			}
 		}
 
@@ -246,9 +247,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 			{
 				*p = '\0';
 
-				strcpy(path, buffer + 5);
+				strcpy(in_path, buffer + 5);
 
-				method = SVR_HTTP_METHOD_POST;
+				in_method = SVR_HTTP_METHOD_POST;
 			}
 		}
 
@@ -262,9 +263,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 			{
 				*p = '\0';
 
-				strcpy(path, buffer + 4);
+				strcpy(in_path, buffer + 4);
 
-				method = SVR_HTTP_METHOD_PUT;
+				in_method = SVR_HTTP_METHOD_PUT;
 			}
 		}
 
@@ -278,9 +279,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 			{
 				*p = '\0';
 
-				strcpy(path, buffer + 7);
+				strcpy(in_path, buffer + 7);
 
-				method = SVR_HTTP_METHOD_DEL;
+				in_method = SVR_HTTP_METHOD_DEL;
 			}
 		}
 
@@ -288,14 +289,21 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		else if(strncmp(buffer, "Content-Length: ", 16) == 0)
 		{
-			strcpy(content_length, buffer + 16);
+			strcpy(in_content_length, buffer + 16);
+		}
+
+		/*---------------------------------------------------------*/
+
+		else if(strncmp(buffer, "Content-Type: ", 14) == 0)
+		{
+			strcpy(in_content_type, buffer + 14);
 		}
 
 		/*---------------------------------------------------------*/
 
 		else if(strncmp(buffer, "Origin: ", 8) == 0)
 		{
-			strcpy(origin, buffer + 8);
+			strcpy(in_origin, buffer + 8);
 		}
 
 		/*---------------------------------------------------------*/
@@ -305,19 +313,19 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	/*                                                                 */
 	/*-----------------------------------------------------------------*/
 
-	const char *content_type = "text/plain";
+	const char *out_content_type = "text/plain";
+	buff_t out_content_buff = NULL;
+	size_t out_content_size = 0x00;
 
-	buff_t content_buff = NULL;
-	size_t content_size = 0x00;
-
-	void (* done_handler_ptr)(void *) = NULL, *done_handler_arg = NULL;
+	void (* done_handler_ptr)(void *) = NULL;
+	void *done_handler_arg = NULL;
 
 	/*-----------------------------------------------------------------*/
 
 	if(thread->user_handler_ptr != NULL)
 	{
-		char *PARAMS = NULL;
-		char *CONTENT = NULL;
+		buff_t in_content_buff = 0x000000000000000000000;
+		size_t in_content_size = atoi(in_content_length);
 
 		size_t nb_of_args = 0;
 
@@ -327,7 +335,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		PARAMS = strchr(path, '?');
+		char *PARAMS = strchr(in_path, '?');
 
 		if(PARAMS != NULL)
 		{
@@ -340,33 +348,33 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		size_t __content_length = atoi(content_length);
-
-		/*---------------------------------------------------------*/
-
-		if(__content_length > 0)
+		if(in_content_size > 0)
 		{
 			/*-------------------------------------------------*/
 			/*                                                 */
 			/*-------------------------------------------------*/
 
-			CONTENT = (char *) malloc(__content_length + 1);
+			in_content_buff = malloc(in_content_size + 1);
 
 			/*-------------------------------------------------*/
 			/*                                                 */
 			/*-------------------------------------------------*/
 
-			if(CONTENT != NULL)
+			if(in_content_buff != NULL)
 			{
 				size_t i;
 
-				for(i = 0; i < __content_length; i++)
+				register char *p = (char *) in_content_buff;
+
+				for(i = 0; i < in_content_size; i++)
 				{
-					if(recv(thread->client_sock, &CONTENT[i], 1, 0) != 1)
+					if(recv(thread->client_sock, p++, 1, 0) != 1)
 					{
 						break;
 					}
 				}
+
+				*p = '\0';
 			}
 			else
 			{
@@ -377,7 +385,12 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 			/*                                                 */
 			/*-------------------------------------------------*/
 
-			nb_of_args += __deserialize_args(&arg_array[nb_of_args], CONTENT);
+			if(strcmp(in_content_type, "application/x-www-form-urlencoded") == 0)
+			{
+				nb_of_args += __deserialize_args(&arg_array[nb_of_args], in_content_buff);
+
+				in_content_size = 0;
+			}
 
 			/*-------------------------------------------------*/
 		}
@@ -387,24 +400,27 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		/*---------------------------------------------------------*/
 
 		((bigbox_http_handler_ptr_t) thread->user_handler_ptr)(
-			&content_type,
-			&content_buff,
-			&content_size,
+			&out_content_type,
+			&out_content_buff,
+			&out_content_size,
 			&done_handler_ptr,
 			&done_handler_arg,
-			method,
+			in_method,
+			in_path,
+			in_content_type,
+			in_content_buff,
+			in_content_size,
 			nb_of_args,
-			arg_array,
-			path
+			arg_array
 		);
 
 		/*---------------------------------------------------------*/
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		if(CONTENT != NULL)
+		if(in_content_buff != NULL)
 		{
-			free((void *) CONTENT);
+			free(in_content_buff);
 		}
 
 		/*---------------------------------------------------------*/
@@ -422,9 +438,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		"Access-Control-Allow-Credentials: true\n"
 		"Access-Control-Allow-Origin: %s\n"
 		"\n",
-		content_type,
-		content_size,
-		origin
+		out_content_type,
+		out_content_size,
+		in_origin
 	);
 
 	/*-----------------------------------------------------------------*/
@@ -440,11 +456,11 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	/*                                                                 */
 	/*-----------------------------------------------------------------*/
 
-	if(content_buff != NULL
+	if(out_content_buff != NULL
 	   &&
-	   content_size != 0x00
+	   out_content_size != 0x00
 	 ) {
-		ret = bigbox_rio_write(thread->client_sock, content_buff, content_size);
+		ret = bigbox_rio_write(thread->client_sock, out_content_buff, out_content_size);
 
 		if(ret < 0)
 		{

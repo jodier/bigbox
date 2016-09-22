@@ -132,12 +132,21 @@ void bigbox_hash_table_item_release(bigbox_hash_table_t *hash_table, bigbox_hash
 
 bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash, buff_t buff, size_t size, uint32_t expire)
 {
+	if(buff == NULL
+	   ||
+	   size == 0x00
+	 ) {
+		return true;
+	}
+
 	/*-----------------------------------------------------------------*/
 
 	bigbox_hash_table_item_t *hash_table_item = malloc(sizeof(bigbox_hash_table_item_t) + size);
 
 	if(hash_table_item == NULL)
 	{
+		bigbox_log(LOG_TYPE_FATAL, "out of memory!\n");
+
 		return false;
 	}
 

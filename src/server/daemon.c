@@ -89,14 +89,14 @@ static void xxxx_xxxxx_xxxx(void *arg)
 
 /*-------------------------------------------------------------------------*/
 
-static void http_handler(const char **content_type, buff_t *content_buff, size_t *content_size, void (** done_handler_ptr)(void *), void **done_handler_arg, int method, size_t nb_of_params, bigbox_http_param_t arg_array[], const char *path)
+static void http_handler(const char **out_content_type, buff_t *out_content_buff, size_t *out_content_size, void (** done_handler_ptr)(void *), void **done_handler_arg, int method, const char *path, const char *in_content_type, buff_t in_content_buff, size_t in_content_size, size_t nb_of_params, bigbox_http_param_t arg_array[])
 {
-	*content_type = "text/html";
+	*out_content_type = "text/html";
 
 	/**/ if(strcmp(path, "/") == 0)
 	{
-		*content_buff = index_html_buff;
-		*content_size = INDEX_HTML_SIZE;
+		*out_content_buff = index_html_buff;
+		*out_content_size = INDEX_HTML_SIZE;
 	}
 	else if(strncmp(path, "/key/", 5) == 0)
 	{
@@ -110,16 +110,16 @@ static void http_handler(const char **content_type, buff_t *content_buff, size_t
 
 			if(bigbox_hash_table_get(&hash_table, path + 5, &hash_table_item))
 			{
-				*content_buff = hash_table_item->buff;
-				*content_size = hash_table_item->size;
+				*out_content_buff = hash_table_item->buff;
+				*out_content_size = hash_table_item->size;
 
 				*done_handler_ptr = xxxx_xxxxx_xxxx;
 				*done_handler_arg = hash_table_item;
 			}
 			else
 			{
-				*content_buff = NULL;
-				*content_size = 0x00;
+				*out_content_buff = NULL;
+				*out_content_size = 0x00;
 			}
 		}
 
@@ -131,7 +131,16 @@ static void http_handler(const char **content_type, buff_t *content_buff, size_t
 		        ||
 			method == SVR_HTTP_METHOD_PUT
 		 ) {
-			bigbox_hash_table_put(&hash_table, path + 5, "Hello World!", 12, 1000000);
+			if(bigbox_hash_table_put(&hash_table, path + 5, in_content_buff, in_content_size, 1000000))
+			{
+				*out_content_buff = "entry added";
+				*out_content_size = 0x0000000000B;
+			}
+			else
+			{
+				*out_content_buff = "entry not added";
+				*out_content_size = 0x00000000000000F;
+			}
 		}
 
 		/*---------------------------------------------------------*/
@@ -142,13 +151,13 @@ static void http_handler(const char **content_type, buff_t *content_buff, size_t
 		{
 			if(bigbox_hash_table_del(&hash_table, path + 5))
 			{
-				*content_buff = "entry deleted";
-				*content_size = 0x000000000000D;
+				*out_content_buff = "entry deleted";
+				*out_content_size = 0x000000000000D;
 			}
 			else
 			{
-				*content_buff = "entry not found";
-				*content_size = 0x00000000000000F;
+				*out_content_buff = "entry not found";
+				*out_content_size = 0x00000000000000F;
 			}
 		}
 
@@ -156,16 +165,16 @@ static void http_handler(const char **content_type, buff_t *content_buff, size_t
 
 		else
 		{
-			*content_buff = "invalid request";
-			*content_size = 0x00000000000000F;
+			*out_content_buff = "invalid request";
+			*out_content_size = 0x00000000000000F;
 		}
 
 		/*---------------------------------------------------------*/
 	}
 	else
 	{
-		*content_buff = "invalid request";
-		*content_size = 0x00000000000000F;
+		*out_content_buff = "invalid request";
+		*out_content_size = 0x00000000000000F;
 	}
 }
 

@@ -210,10 +210,13 @@ typedef void (* bigbox_http_handler_ptr_t)(
 	void **done_handler_arg,
 
 	int method,
-	size_t nb_of_params,
-	bigbox_http_param_t param_array[],
+	const char *path,
+	const char *in_content_type,
+	buff_t in_content_buff,
+	size_t in_content_size,
 
-	const char *path
+	size_t nb_of_params,
+	bigbox_http_param_t param_array[]
 );
 
 /*-------------------------------------------------------------------------*/
