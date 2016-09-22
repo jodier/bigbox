@@ -38,6 +38,11 @@
 
 /*-------------------------------------------------------------------------*/
 
+#define BIGBOX_DEFAULT_DIM 4096
+#define BIGBOX_DEFAULT_PORT 6969
+
+/*-------------------------------------------------------------------------*/
+
 static void version(void)
 {
 	printf("%s\n", BIGBOX_VERSION);
@@ -49,11 +54,6 @@ static void help(const char *program_name, size_t default_dim, uint32_t default_
 {
 	printf("%s %zu %u\n", program_name, default_dim, default_port);
 }
-
-/*-------------------------------------------------------------------------*/
-
-#define BIGBOX_DEFAULT_DIM 4096
-#define BIGBOX_DEFAULT_PORT 6969
 
 /*-------------------------------------------------------------------------*/
 
@@ -131,7 +131,7 @@ static void http_handler(const char **out_content_type, buff_t *out_content_buff
 		        ||
 			in_method == SVR_HTTP_METHOD_PUT
 		 ) {
-			if(bigbox_hash_table_put(&hash_table, in_path + 5, in_content_buff, in_content_size, 1000000))
+			if(bigbox_hash_table_put(&hash_table, in_path + 5, in_content_buff, in_content_size, UINT32_MAX))
 			{
 				*out_content_buff = "entry added";
 				*out_content_size = 0x0000000000B;
@@ -237,8 +237,6 @@ int main(int argc, char **argv)
 		bigbox_log(LOG_TYPE_FATAL, "could not initialize DB!\n");
 	}
 
-	bigbox_hash_table_put(&hash_table, "foo", "Hello World!", 12, 1000000);
-
 	/*-----------------------------------------------------------------*/
 
 	signal(SIGINT, __exit);
@@ -246,6 +244,8 @@ int main(int argc, char **argv)
 	/*-----------------------------------------------------------------*/
 
 	bigbox_server_initialize(&server_ctx);
+
+	/*-----------------------------------------------------------------*/
 
 	if(bigbox_server_listen(&server_ctx, port, 100) < 0)
 	{
@@ -256,7 +256,16 @@ int main(int argc, char **argv)
 		bigbox_log(LOG_TYPE_FATAL, "%s!\n", strerror(errno));
 	}
 
-	bigbox_http_loop(&server_ctx, &pooler_ctx, http_handler, 100);
+	/*-----------------------------------------------------------------*/
+
+	if(bigbox_http_loop(&server_ctx, &pooler_ctx, http_handler, 100) < 0)
+	{
+		bigbox_server_finalize(&server_ctx);
+
+		bigbox_hash_table_finalize(&hash_table);
+
+		bigbox_log(LOG_TYPE_FATAL, "%s!\n", strerror(errno));
+	}
 
 	/*-----------------------------------------------------------------*/
 
