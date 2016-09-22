@@ -39,9 +39,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_tcp_loop(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *pooler_ctx, bigbox_tcp_handler_ptr_t handler_ptr, int nb_of_threads)
+int bigbox_tcp_loop(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *pooler_ctx, bigbox_tcp_handler_ptr_t handler_ptr, int nb_of_threads)
 {
-	bigbox_server_pooler(server_ctx, pooler_ctx, __loop_handler, handler_ptr, nb_of_threads);
+	return bigbox_server_pooler(server_ctx, pooler_ctx, __loop_handler, handler_ptr, nb_of_threads);
 }
 
 /*-------------------------------------------------------------------------*/

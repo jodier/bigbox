@@ -88,9 +88,7 @@ uint64_t bigbox_hash(BUFF_t buff, size_t size, uint64_t seed1, uint64_t seed2)
 
 	/*-----------------------------------------------------------------*/
 
-	register uint64_t m;
-
-	for(m = *p; p != q; m = *(p += 8))
+	for(register uint64_t m = *p; p != q; m = *(p += 8))
 	{
 		v3 ^= m;
 		for(i = 0; i < cROUNDS; ++i) SIP_ROUND();

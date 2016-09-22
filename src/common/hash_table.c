@@ -145,8 +145,6 @@ bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 
 	if(hash_table_item == NULL)
 	{
-		bigbox_log(LOG_TYPE_FATAL, "out of memory!\n");
-
 		return false;
 	}
 

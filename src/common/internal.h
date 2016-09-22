@@ -67,7 +67,7 @@ typedef struct bigbox_server_thread_s
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_server_pooler(
+int bigbox_server_pooler(
 	struct bigbox_server_ctx_s *server_ctx,
 	struct bigbox_pooler_ctx_s *pooler_ctx,
 	void (* loop_handler_ptr)(struct bigbox_server_thread_s *),

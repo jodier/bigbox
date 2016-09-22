@@ -104,7 +104,7 @@ static char *__decode_uri(char *s)
 
 /*-------------------------------------------------------------------------*/
 
-static size_t __deserialize_args(bigbox_http_param_t arg_array[], char *s)
+static size_t __deserialize_params(bigbox_http_param_t arg_array[], char *s)
 {
 	char *lasts;
 
@@ -324,9 +324,6 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 	if(thread->user_handler_ptr != NULL)
 	{
-		buff_t in_content_buff = 0x000000000000000000000;
-		size_t in_content_size = atoi(in_content_length);
-
 		size_t nb_of_args = 0;
 
 		bigbox_http_param_t arg_array[128];
@@ -341,32 +338,31 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		{
 			*params++ = '\0';
 
-			nb_of_args += __deserialize_args(&arg_array[nb_of_args], params);
+			nb_of_args += __deserialize_params(&arg_array[nb_of_args], params);
 		}
 
 		/*---------------------------------------------------------*/
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
+		buff_t in_content_buff = 0x000000000000000000000;
+		size_t in_content_size = atoi(in_content_length);
+
+		/*---------------------------------------------------------*/
+
 		if(in_content_size > 0)
 		{
-			/*-------------------------------------------------*/
-			/*                                                 */
-			/*-------------------------------------------------*/
-
 			in_content_buff = malloc(in_content_size + 1);
-
-			/*-------------------------------------------------*/
-			/*                                                 */
-			/*-------------------------------------------------*/
 
 			if(in_content_buff != NULL)
 			{
-				size_t i;
+				/*-----------------------------------------*/
+				/*                                         */
+				/*-----------------------------------------*/
 
-				register char *p = (char *) in_content_buff;
+				char *p = (char *) in_content_buff;
 
-				for(i = 0; i < in_content_size; i++)
+				for(size_t i = 0; i < in_content_size; i++)
 				{
 					if(recv(thread->client_sock, p++, 1, 0) != 1)
 					{
@@ -375,24 +371,24 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 				}
 
 				*p = '\0';
+
+				/*-----------------------------------------*/
+				/*                                         */
+				/*-----------------------------------------*/
+
+				if(strcmp(in_content_type, "application/x-www-form-urlencoded") == 0)
+				{
+					nb_of_args += __deserialize_params(&arg_array[nb_of_args], in_content_buff);
+
+					in_content_size = 0;
+				}
+
+				/*-----------------------------------------*/
 			}
 			else
 			{
-				bigbox_log(LOG_TYPE_ERROR, "out of memory!\n");
-			}
-
-			/*-------------------------------------------------*/
-			/*                                                 */
-			/*-------------------------------------------------*/
-
-			if(strcmp(in_content_type, "application/x-www-form-urlencoded") == 0)
-			{
-				nb_of_args += __deserialize_args(&arg_array[nb_of_args], in_content_buff);
-
 				in_content_size = 0;
 			}
-
-			/*-------------------------------------------------*/
 		}
 
 		/*---------------------------------------------------------*/
@@ -482,9 +478,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_http_loop(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *pooler_ctx, bigbox_http_handler_ptr_t handler_ptr, int nb_of_threads)
+int bigbox_http_loop(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *pooler_ctx, bigbox_http_handler_ptr_t handler_ptr, int nb_of_threads)
 {
-	bigbox_server_pooler(server_ctx, pooler_ctx, __loop_handler, handler_ptr, nb_of_threads);
+	return bigbox_server_pooler(server_ctx, pooler_ctx, __loop_handler, handler_ptr, nb_of_threads);
 }
 
 /*-------------------------------------------------------------------------*/

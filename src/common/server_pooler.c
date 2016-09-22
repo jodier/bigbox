@@ -125,7 +125,7 @@ __bye:
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *pooler_ctx, void (* loop_handler_ptr)(bigbox_server_thread_t *), void *user_handler_ptr, int nb_of_threads)
+int bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *pooler_ctx, void (* loop_handler_ptr)(bigbox_server_thread_t *), void *user_handler_ptr, int nb_of_threads)
 {
 	int ret;
 
@@ -145,7 +145,9 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 
 	if(ret < 0)
 	{
-		bigbox_log(LOG_TYPE_FATAL, "could not create pmutex!\n");
+		bigbox_log(LOG_TYPE_ERROR, "could not create pmutex!\n");
+
+		return ret;
 	}
 
 	/*-----------------------------------------------------------------*/
@@ -154,7 +156,9 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 
 	if(ret < 0)
 	{
-		bigbox_log(LOG_TYPE_FATAL, "could not create pcond!\n");
+		bigbox_log(LOG_TYPE_ERROR, "could not create pcond!\n");
+
+		return ret;
 	}
 
 	/*-----------------------------------------------------------------*/
@@ -163,7 +167,9 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 
 	if(ret < 0)
 	{
-		bigbox_log(LOG_TYPE_FATAL, "could not create pcond!\n");
+		bigbox_log(LOG_TYPE_ERROR, "could not create pcond!\n");
+
+		return ret;
 	}
 
 	/*-----------------------------------------------------------------*/
@@ -172,16 +178,9 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 
 	bigbox_server_thread_t *thread_array = malloc(nb_of_threads * sizeof(bigbox_server_thread_t));
 
-	if(thread_array == NULL)
-	{
-		bigbox_log(LOG_TYPE_FATAL, "out of memory!\n");
-	}
-
 	/*-----------------------------------------------------------------*/
 
-	int i;
-
-	for(i = 0; i < nb_of_threads; i++)
+	for(int i = 0; i < nb_of_threads; i++)
 	{
 		bigbox_server_thread_t *thread = &thread_array[i];
 
@@ -203,7 +202,9 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 
 		if(ret < 0)
 		{
-			bigbox_log(LOG_TYPE_FATAL, "could not create pthread!\n");
+			bigbox_log(LOG_TYPE_ERROR, "could not create pthread!\n");
+
+			return ret;
 		}
 
 		/*---------------------------------------------------------*/
@@ -301,7 +302,7 @@ __bye:
 
 	/*-----------------------------------------------------------------*/
 
-	for(i = 0; i < nb_of_threads; i++)
+	for(int i = 0; i < nb_of_threads; i++)
 	{
 		pthread_join(thread_array[i].pthread, NULL);
 	}
@@ -309,6 +310,10 @@ __bye:
 	/*-----------------------------------------------------------------*/
 
 	free(thread_array);
+
+	/*-----------------------------------------------------------------*/
+
+	return 0;
 
 	/*-----------------------------------------------------------------*/
 }

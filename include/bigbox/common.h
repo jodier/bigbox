@@ -401,14 +401,14 @@ int bigbox_server_listen(
 /* HIGH LEVEL SERVERS                                                      */
 /*-------------------------------------------------------------------------*/
 
-void bigbox_tcp_loop(
+int bigbox_tcp_loop(
 	struct bigbox_server_ctx_s *server_ctx,
 	struct bigbox_pooler_ctx_s *pooler_ctx,
 	bigbox_tcp_handler_ptr_t handler_ptr,
 	int nb_of_threads
 );
 
-void bigbox_http_loop(
+int bigbox_http_loop(
 	struct bigbox_server_ctx_s *server_ctx,
 	struct bigbox_pooler_ctx_s *http_ctx,
 	bigbox_http_handler_ptr_t handler_ptr,
