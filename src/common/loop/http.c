@@ -378,7 +378,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 				if(strcmp(in_content_type, "application/x-www-form-urlencoded") == 0)
 				{
-					nb_of_args += __deserialize_params(&arg_array[nb_of_args], in_content_buff);
+					nb_of_args += __deserialize_params(arg_array + nb_of_args, in_content_buff);
 
 					in_content_size = 0;
 				}

@@ -89,26 +89,26 @@ static void xxxx_xxxxx_xxxx(void *arg)
 
 /*-------------------------------------------------------------------------*/
 
-static void http_handler(const char **out_content_type, buff_t *out_content_buff, size_t *out_content_size, void (** done_handler_ptr)(void *), void **done_handler_arg, int method, const char *path, const char *in_content_type, buff_t in_content_buff, size_t in_content_size, size_t nb_of_params, bigbox_http_param_t arg_array[])
+static void http_handler(const char **out_content_type, buff_t *out_content_buff, size_t *out_content_size, void (** done_handler_ptr)(void *), void **done_handler_arg, int in_method, const char *in_path, const char *in_content_type, buff_t in_content_buff, size_t in_content_size, size_t nb_of_params, bigbox_http_param_t arg_array[])
 {
 	*out_content_type = "text/html";
 
-	/**/ if(strcmp(path, "/") == 0)
+	/**/ if(strcmp(in_path, "/") == 0)
 	{
 		*out_content_buff = index_html_buff;
 		*out_content_size = INDEX_HTML_SIZE;
 	}
-	else if(strncmp(path, "/key/", 5) == 0)
+	else if(strncmp(in_path, "/key/", 5) == 0)
 	{
 		/*---------------------------------------------------------*/
 		/* METHOD GET                                              */
 		/*---------------------------------------------------------*/
 
-		/**/ if(method == SVR_HTTP_METHOD_GET)
+		/**/ if(in_method == SVR_HTTP_METHOD_GET)
 		{
 			bigbox_hash_table_item_t *hash_table_item;
 
-			if(bigbox_hash_table_get(&hash_table, path + 5, &hash_table_item))
+			if(bigbox_hash_table_get(&hash_table, in_path + 5, &hash_table_item))
 			{
 				*out_content_buff = hash_table_item->buff;
 				*out_content_size = hash_table_item->size;
@@ -127,11 +127,11 @@ static void http_handler(const char **out_content_type, buff_t *out_content_buff
 		/* METHOD POST/PUT                                         */
 		/*---------------------------------------------------------*/
 
-		else if(method == SVR_HTTP_METHOD_POST
+		else if(in_method == SVR_HTTP_METHOD_POST
 		        ||
-			method == SVR_HTTP_METHOD_PUT
+			in_method == SVR_HTTP_METHOD_PUT
 		 ) {
-			if(bigbox_hash_table_put(&hash_table, path + 5, in_content_buff, in_content_size, 1000000))
+			if(bigbox_hash_table_put(&hash_table, in_path + 5, in_content_buff, in_content_size, 1000000))
 			{
 				*out_content_buff = "entry added";
 				*out_content_size = 0x0000000000B;
@@ -147,9 +147,9 @@ static void http_handler(const char **out_content_type, buff_t *out_content_buff
 		/* METHOD DEL                                              */
 		/*---------------------------------------------------------*/
 
-		else if(method == SVR_HTTP_METHOD_DEL)
+		else if(in_method == SVR_HTTP_METHOD_DEL)
 		{
-			if(bigbox_hash_table_del(&hash_table, path + 5))
+			if(bigbox_hash_table_del(&hash_table, in_path + 5))
 			{
 				*out_content_buff = "entry deleted";
 				*out_content_size = 0x000000000000D;
