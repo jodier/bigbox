@@ -181,16 +181,16 @@ typedef struct bigbox_pooler_ctx_s
 #define SVR_HTTP_METHOD_GET	1
 #define SVR_HTTP_METHOD_POST	2
 #define SVR_HTTP_METHOD_PUT	3
-#define SVR_HTTP_METHOD_DELETE	4
+#define SVR_HTTP_METHOD_DEL	4
 
 /*-------------------------------------------------------------------------*/
 
-typedef struct bigbox_http_arg_s
+typedef struct bigbox_http_param_s
 {
 	const char *name;
 	const char *value;
 
-} bigbox_http_arg_t;
+} bigbox_http_param_t;
 
 /*-------------------------------------------------------------------------*/
 
@@ -206,13 +206,12 @@ typedef void (* bigbox_http_handler_ptr_t)(
 	buff_t *content_buff,
 	size_t *content_size,
 
-	void (** post_handler)(void *),
-	void **post_handler_arg,
+	void (** done_handler_ptr)(void *),
+	void **done_handler_arg,
 
 	int method,
-
-	size_t nb_of_args,
-	bigbox_http_arg_t arg_array[],
+	size_t nb_of_params,
+	bigbox_http_param_t param_array[],
 
 	const char *path
 );
@@ -272,7 +271,7 @@ bool bigbox_hash_table_finalize(
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_hash_table_release_item(
+void bigbox_hash_table_item_release(
 	struct bigbox_hash_table_s *hash_table,
 	struct bigbox_hash_table_item_s *hash_table_item
 );

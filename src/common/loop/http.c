@@ -104,7 +104,7 @@ static char *__decode_uri(char *s)
 
 /*-------------------------------------------------------------------------*/
 
-static size_t __deserialize_args(bigbox_http_arg_t arg_array[], char *s)
+static size_t __deserialize_args(bigbox_http_param_t arg_array[], char *s)
 {
 	char *lasts;
 
@@ -280,7 +280,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 				strcpy(path, buffer + 7);
 
-				method = SVR_HTTP_METHOD_PUT;
+				method = SVR_HTTP_METHOD_DEL;
 			}
 		}
 
@@ -310,9 +310,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	buff_t content_buff = NULL;
 	size_t content_size = 0x00;
 
-	void (* post_handler)(void *) = NULL;
-
-	void *post_handler_arg = NULL;
+	void (* done_handler_ptr)(void *) = NULL, *done_handler_arg = NULL;
 
 	/*-----------------------------------------------------------------*/
 
@@ -323,7 +321,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		size_t nb_of_args = 0;
 
-		bigbox_http_arg_t arg_array[128];
+		bigbox_http_param_t arg_array[128];
 
 		/*---------------------------------------------------------*/
 		/*                                                         */
@@ -342,7 +340,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		int __content_length = atoi(content_length);
+		size_t __content_length = atoi(content_length);
 
 		/*---------------------------------------------------------*/
 
@@ -360,7 +358,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 			if(CONTENT != NULL)
 			{
-				int i;
+				size_t i;
 
 				for(i = 0; i < __content_length; i++)
 				{
@@ -392,8 +390,8 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 			&content_type,
 			&content_buff,
 			&content_size,
-			&post_handler,
-			&post_handler_arg,
+			&done_handler_ptr,
+			&done_handler_arg,
 			method,
 			nb_of_args,
 			arg_array,
@@ -429,6 +427,8 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		origin
 	);
 
+	/*-----------------------------------------------------------------*/
+
 	ret = bigbox_rio_write(thread->client_sock, buffer, strlen(buffer));
 
 	if(ret < 0)
@@ -456,9 +456,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	/*                                                                 */
 	/*-----------------------------------------------------------------*/
 
-	if(post_handler != NULL)
+	if(done_handler_ptr != NULL)
 	{
-		post_handler(post_handler_arg);
+		done_handler_ptr(done_handler_arg);
 	}
 
 	/*-----------------------------------------------------------------*/

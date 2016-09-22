@@ -82,45 +82,90 @@ static void __exit(int signal)
 
 /*-------------------------------------------------------------------------*/
 
-static void _retain(void *arg)
+static void xxxx_xxxxx_xxxx(void *arg)
 {
-	//printf("%s\n", (const char *) arg);
+	bigbox_hash_table_item_release(&hash_table, arg);
 }
 
 /*-------------------------------------------------------------------------*/
 
-static void http_handler(const char **content_type, buff_t *content_buff, size_t *content_size, void (** post_handler)(void *), void **post_handler_arg, int method, size_t nb_of_args, bigbox_http_arg_t arg_array[], const char *path)
+static void http_handler(const char **content_type, buff_t *content_buff, size_t *content_size, void (** done_handler_ptr)(void *), void **done_handler_arg, int method, size_t nb_of_params, bigbox_http_param_t arg_array[], const char *path)
 {
+	*content_type = "text/html";
+
 	/**/ if(strcmp(path, "/") == 0)
 	{
-		*content_type = "text/html";
 		*content_buff = index_html_buff;
 		*content_size = INDEX_HTML_SIZE;
 	}
 	else if(strncmp(path, "/key/", 5) == 0)
 	{
-		bigbox_hash_table_item_t *hash_table_item;
+		/*---------------------------------------------------------*/
+		/* METHOD GET                                              */
+		/*---------------------------------------------------------*/
 
-		if(bigbox_hash_table_get(&hash_table, path + 5, &hash_table_item))
+		/**/ if(method == SVR_HTTP_METHOD_GET)
 		{
-			*content_buff = hash_table_item->buff;
-			*content_size = hash_table_item->size;
+			bigbox_hash_table_item_t *hash_table_item;
 
-			*post_handler = _retain;
-			*post_handler_arg = &hash_table_item;
+			if(bigbox_hash_table_get(&hash_table, path + 5, &hash_table_item))
+			{
+				*content_buff = hash_table_item->buff;
+				*content_size = hash_table_item->size;
+
+				*done_handler_ptr = xxxx_xxxxx_xxxx;
+				*done_handler_arg = hash_table_item;
+			}
+			else
+			{
+				*content_buff = NULL;
+				*content_size = 0x00;
+			}
 		}
+
+		/*---------------------------------------------------------*/
+		/* METHOD POST/PUT                                         */
+		/*---------------------------------------------------------*/
+
+		else if(method == SVR_HTTP_METHOD_POST
+		        ||
+			method == SVR_HTTP_METHOD_PUT
+		 ) {
+			bigbox_hash_table_put(&hash_table, path + 5, "Hello World!", 12, 1000000);
+		}
+
+		/*---------------------------------------------------------*/
+		/* METHOD DEL                                              */
+		/*---------------------------------------------------------*/
+
+		else if(method == SVR_HTTP_METHOD_DEL)
+		{
+			if(bigbox_hash_table_del(&hash_table, path + 5))
+			{
+				*content_buff = "entry deleted";
+				*content_size = 0x000000000000D;
+			}
+			else
+			{
+				*content_buff = "entry not found";
+				*content_size = 0x00000000000000F;
+			}
+		}
+
+		/*---------------------------------------------------------*/
+
 		else
 		{
-			*content_buff = NULL;
-			*content_size = 0x00;
+			*content_buff = "invalid request";
+			*content_size = 0x00000000000000F;
 		}
+
+		/*---------------------------------------------------------*/
 	}
 	else
 	{
-		char *p = "invalid request";
-
-		*content_buff = /****/(p);
-		*content_size = strlen(p);
+		*content_buff = "invalid request";
+		*content_size = 0x00000000000000F;
 	}
 }
 
@@ -183,7 +228,7 @@ int main(int argc, char **argv)
 		bigbox_log(LOG_TYPE_FATAL, "could not initialize DB!\n");
 	}
 
-	bigbox_hash_table_put(&hash_table, "rioi", "Hello World!", 12, 1000000);
+	bigbox_hash_table_put(&hash_table, "foo", "Hello World!", 12, 1000000);
 
 	/*-----------------------------------------------------------------*/
 

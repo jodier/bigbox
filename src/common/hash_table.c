@@ -49,7 +49,7 @@ bool bigbox_hash_table_initialize(bigbox_hash_table_t *hash_table, size_t dim)
 		hash_table->list = NULL;
 		hash_table->table = table;
 
-		memset(table, 0x00000000, size);
+		memset(table, 0, size);
 
 		pthread_mutex_init(&hash_table->mutex, NULL);
 	
@@ -94,7 +94,7 @@ bool bigbox_hash_table_finalize(bigbox_hash_table_t *hash_table)
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_hash_table_release_item_unsafe(bigbox_hash_table_t *hash_table, bigbox_hash_table_item_t *hash_table_item, size_t indx)
+void bigbox_hash_table_item_release_unsafe(bigbox_hash_table_t *hash_table, bigbox_hash_table_item_t *hash_table_item, size_t indx)
 {
 	/**/	if(--hash_table_item->refcnt < 1)
 	/**/	{
@@ -108,7 +108,7 @@ void bigbox_hash_table_release_item_unsafe(bigbox_hash_table_t *hash_table, bigb
 
 /*-------------------------------------------------------------------------*/
 
-void bigbox_hash_table_release_item(bigbox_hash_table_t *hash_table, bigbox_hash_table_item_t *hash_table_item)
+void bigbox_hash_table_item_release(bigbox_hash_table_t *hash_table, bigbox_hash_table_item_t *hash_table_item)
 {
 	/*-----------------------------------------------------------------*/
 
@@ -121,7 +121,7 @@ void bigbox_hash_table_release_item(bigbox_hash_table_t *hash_table, bigbox_hash
 
 	pthread_mutex_lock(&hash_table->mutex);
 
-	/**/	bigbox_hash_table_release_item_unsafe(hash_table, hash_table_item, indx);
+	/**/	bigbox_hash_table_item_release_unsafe(hash_table, hash_table_item, indx);
 
 	pthread_mutex_unlock(&hash_table->mutex);
 
@@ -211,7 +211,7 @@ bool bigbox_hash_table_get_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	/**/	{
 	/**/		/***********************/;
 	/**/
-	/**/		*result = ((((((0x0))))));
+	/**/		*result = 0x0000000000000;
 	/**/	}
 
 	pthread_mutex_unlock(&hash_table->mutex);
@@ -282,7 +282,7 @@ bool bigbox_hash_table_del_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 
 	/*-----------------------------------------------------------------*/
 _found:
-	/**/	bigbox_hash_table_release_item_unsafe(hash_table, hash_table_item, indx);
+	/**/	bigbox_hash_table_item_release_unsafe(hash_table, hash_table_item, indx);
 
 	pthread_mutex_unlock(&hash_table->mutex);
 

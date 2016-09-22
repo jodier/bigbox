@@ -42,7 +42,7 @@
 
 void bigbox_client_initialize(bigbox_client_ctx_t *client_ctx)
 {
-	memset(client_ctx, 0x00, sizeof(bigbox_client_ctx_t));
+	memset(client_ctx, 0, sizeof(bigbox_client_ctx_t));
 
 	client_ctx->sock = -1;
 }

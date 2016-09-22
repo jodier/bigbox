@@ -41,7 +41,7 @@
 
 void bigbox_server_initialize(bigbox_server_ctx_t *server_ctx)
 {
-	memset(server_ctx, 0x00, sizeof(bigbox_server_ctx_t));
+	memset(server_ctx, 0, sizeof(bigbox_server_ctx_t));
 
 	server_ctx->sock = -1;
 }

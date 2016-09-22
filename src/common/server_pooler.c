@@ -238,6 +238,8 @@ void bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *
 
 		int client_sock = accept(server_ctx->sock, (SOCKADDR *) &sockaddr, (socklen_t *) &socklen);
 
+		/*---------------------------------------------------------*/
+
 		if(pooler_ctx->alive == false)
 		{
 			goto __bye;
