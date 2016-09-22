@@ -335,13 +335,13 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		char *PARAMS = strchr(in_path, '?');
+		char *params = strchr(in_path, '?');
 
-		if(PARAMS != NULL)
+		if(params != NULL)
 		{
-			*PARAMS++ = '\0';
+			*params++ = '\0';
 
-			nb_of_args += __deserialize_args(&arg_array[nb_of_args], PARAMS);
+			nb_of_args += __deserialize_args(&arg_array[nb_of_args], params);
 		}
 
 		/*---------------------------------------------------------*/
