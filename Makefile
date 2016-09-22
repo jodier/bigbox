@@ -3,15 +3,15 @@ all:
 	# COMMON                                                            #
 	#####################################################################
 
-	gcc -O0 -g -Wall -c -o src/common/client.o src/common/client.c
-	gcc -O0 -g -Wall -c -o src/common/hash.o src/common/hash.c
-	gcc -O0 -g -Wall -c -o src/common/hash_table.o src/common/hash_table.c
-	gcc -O0 -g -Wall -c -o src/common/log.o src/common/log.c
-	gcc -O0 -g -Wall -c -o src/common/loop/http.o src/common/loop/http.c
-	gcc -O0 -g -Wall -c -o src/common/loop/tcp.o src/common/loop/tcp.c
-	gcc -O0 -g -Wall -c -o src/common/rio.o src/common/rio.c
-	gcc -O0 -g -Wall -c -o src/common/server.o src/common/server.c
-	gcc -O0 -g -Wall -c -o src/common/server_pooler.o src/common/server_pooler.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/common/client.o src/common/client.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/common/hash.o src/common/hash.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/common/hash_table.o src/common/hash_table.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/common/log.o src/common/log.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/common/loop/http.o src/common/loop/http.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/common/loop/tcp.o src/common/loop/tcp.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/common/rio.o src/common/rio.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/common/server.o src/common/server.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/common/server_pooler.o src/common/server_pooler.c
 
 	mkdir -p lib
 
@@ -25,17 +25,17 @@ all:
 
 	#####################################################################
 
-	gcc -O0 -g -Wall -c -o src/server/daemon.o src/server/daemon.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/server/daemon.o src/server/daemon.c
 
-	gcc -L lib -o bigbox-server src/server/*.o -lbigbox-common -lpthread
+	gcc -std=c99 -L lib -o bigbox-server src/server/*.o -lbigbox-common -lpthread
 
 	#####################################################################
 	# CLIENT                                                            #
 	#####################################################################
 
-	gcc -O0 -g -Wall -c -o src/client/cli.o src/client/cli.c
+	gcc -std=c99 -O0 -g -Wall -c -o src/client/cli.o src/client/cli.c
 
-	gcc -L lib -o bigbox-cli src/client/*.o -lbigbox-common
+	gcc -std=c99 -L lib -o bigbox-cli src/client/*.o -lbigbox-common
 
 	#####################################################################
 
