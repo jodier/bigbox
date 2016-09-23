@@ -166,7 +166,7 @@ bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 
 		/**/	bigbox_list_append_tail_named(hash_table->list, hash_table_item, list_prev, list_next);
 		/**/
-		/**/	bigbox_list_append_tail_named(hash_table->table[indx], hash_table_item, table_prev, table_next);
+		/**/	bigbox_list_append_head_named(hash_table->table[indx], hash_table_item, table_prev, table_next);
 
 		pthread_mutex_unlock(&hash_table->mutex);
 	}
