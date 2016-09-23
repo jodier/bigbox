@@ -153,7 +153,7 @@ static ssize_t __readline(int sock, char *buffer, size_t size)
 
 	for(;;)
 	{
-		if(size == 0 || recv(sock, &c, 1, 0) != 1)
+		if(size == 0 || bigbox_rio_read(sock, &c, 1) != 1)
 		{
 			return -1;
 		}
@@ -364,7 +364,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 				for(size_t i = 0; i < in_content_size; i++)
 				{
-					if(recv(thread->client_sock, p++, 1, 0) != 1)
+					if(bigbox_rio_read(thread->client_sock, p++, 1) != 1)
 					{
 						break;
 					}

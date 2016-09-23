@@ -50,6 +50,8 @@ static void *__handler(void *args)
 
 	pthread_mutex_lock(&thread->pooler_ctx->mutex);
 
+	/*-----------------------------------------------------------------*/
+
 	for(;;)
 	{
 		/**/	/*-------------------------------------------------*/
@@ -215,6 +217,8 @@ int bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *p
 	/*-----------------------------------------------------------------*/
 
 	pthread_mutex_lock(&pooler_ctx->mutex);
+
+	/*-----------------------------------------------------------------*/
 
 	for(;;)
 	{
