@@ -99,6 +99,16 @@ body {
 
 /*-------------------------------------------------------------------------*/
 
+button {
+	border: 1px solid #CCC;
+
+	border-radius: 4px;
+
+	cursor: pointer;
+}
+
+/*-------------------------------------------------------------------------*/
+
 pre {
 	color: #333;
 
@@ -111,9 +121,12 @@ pre {
 
 	margin: 00px;
 	padding: 10px;
+}
 
-	word-break: break-all;
-	word-wrap: break-word;
+/*-------------------------------------------------------------------------*/
+
+pre code {
+	white-space: pre-wrap;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -144,6 +157,7 @@ pre code .line-number:before {
 
 		<div id="left_div">
 
+			<!-- TODO -->
 
 		</div>
 
@@ -158,6 +172,15 @@ pre code .line-number:before {
 						</td>
 						<td style="text-align: left; width: auto;">
 							<input type="text" />
+						</td>
+						<td style="width: 48px;">
+							<button onclick="get(document.querySelector('#testit input').value);" style="height: 24px; width: 42px;">get</button>
+						</td>
+						<td style="width: 48px;">
+							<button onclick="add(document.querySelector('#testit input').value);" style="height: 24px; width: 42px;">add</button>
+						</td>
+						<td style="width: 48px;">
+							<button onclick="del(document.querySelector('#testit input').value);" style="height: 24px; width: 42px;">del</button>
 						</td>
 					</tr>
 				</table>
@@ -179,16 +202,14 @@ pre code .line-number:before {
 
 					if(key)
 					{
-						exec(key);
-
-						e.target.value = '';
+						get(key);
 					}
 				}
 			});
 
 			/*-------------------------------------------------*/
 
-			function exec(key)
+			function get(key)
 			{
 				var xmlHttpRequest = new XMLHttpRequest();
 
@@ -209,7 +230,59 @@ pre code .line-number:before {
 
 				xmlHttpRequest.open('GET', document.location.href + 'key/' + key, true);
 
-				xmlHttpRequest.send(key);
+				xmlHttpRequest.send();
+			}
+
+			/*-------------------------------------------------*/
+
+			function add(key)
+			{
+				var xmlHttpRequest = new XMLHttpRequest();
+
+				xmlHttpRequest.onreadystatechange = function() {
+
+					if(xmlHttpRequest.readyState == XMLHttpRequest.DONE)
+					{
+						if(xmlHttpRequest.status == 200)
+						{
+							showResult(key, xmlHttpRequest.responseText);
+						}
+						else
+						{
+							showError(key, xmlHttpRequest.responseText);
+						}
+					}
+				};
+
+				xmlHttpRequest.open('PUT', document.location.href + 'key/' + key, true);
+
+				xmlHttpRequest.send(prompt('Value:'));
+			}
+
+			/*-------------------------------------------------*/
+
+			function del(key)
+			{
+				var xmlHttpRequest = new XMLHttpRequest();
+
+				xmlHttpRequest.onreadystatechange = function() {
+
+					if(xmlHttpRequest.readyState == XMLHttpRequest.DONE)
+					{
+						if(xmlHttpRequest.status == 200)
+						{
+							showResult(key, xmlHttpRequest.responseText);
+						}
+						else
+						{
+							showError(key, xmlHttpRequest.responseText);
+						}
+					}
+				};
+
+				xmlHttpRequest.open('DELETE', document.location.href + 'key/' + key, true);
+
+				xmlHttpRequest.send();
 			}
 
 			/*-------------------------------------------------*/
@@ -220,11 +293,9 @@ pre code .line-number:before {
 
 				var text = '';
 
-				var lines = result.split('\n');
-
-				for(var i in lines)
+				for(var line of result.split('\n'))
 				{
-					text += '<i class="line-number"></i>' + lines[i] + '\n';
+					text += '<i class="line-number"></i>' + line + '\n';
 				}
 
 				/*-----------------------------------------*/

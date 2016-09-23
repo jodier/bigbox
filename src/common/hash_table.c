@@ -132,42 +132,44 @@ void bigbox_hash_table_item_release(bigbox_hash_table_t *hash_table, bigbox_hash
 
 bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t hash, buff_t buff, size_t size, uint32_t expire)
 {
-	if(buff == NULL
-	   ||
-	   size == 0x00
+	/*-----------------------------------------------------------------*/
+
+ 	bigbox_hash_table_del_by_hash(hash_table, hash);
+
+	/*-----------------------------------------------------------------*/
+
+	if(buff != NULL
+	   &&
+	   size != 0x00
 	 ) {
-		return true;
+		bigbox_hash_table_item_t *hash_table_item = malloc(sizeof(bigbox_hash_table_item_t) + size);
+
+		if(hash_table_item == NULL)
+		{
+			return false;
+		}
+
+		hash_table_item->refcnt = 0x0001;
+		hash_table_item->expire = expire;
+
+		hash_table_item->hash = hash;
+		hash_table_item->buff = memcpy(hash_table_item + 1, buff, size);
+		hash_table_item->size = size;
+
+		/*---------------------------------------------------------*/
+
+		size_t indx = hash % hash_table->dim;
+
+		/*---------------------------------------------------------*/
+
+		pthread_mutex_lock(&hash_table->mutex);
+
+		/**/	bigbox_list_append_tail_named(hash_table->list, hash_table_item, list_prev, list_next);
+		/**/
+		/**/	bigbox_list_append_tail_named(hash_table->table[indx], hash_table_item, table_prev, table_next);
+
+		pthread_mutex_unlock(&hash_table->mutex);
 	}
-
-	/*-----------------------------------------------------------------*/
-
-	bigbox_hash_table_item_t *hash_table_item = malloc(sizeof(bigbox_hash_table_item_t) + size);
-
-	if(hash_table_item == NULL)
-	{
-		return false;
-	}
-
-	hash_table_item->refcnt = 0x0001;
-	hash_table_item->expire = expire;
-
-	hash_table_item->hash = hash;
-	hash_table_item->buff = memcpy(hash_table_item + 1, buff, size);
-	hash_table_item->size = size;
-
-	/*-----------------------------------------------------------------*/
-
-	size_t indx = hash % hash_table->dim;
-
-	/*-----------------------------------------------------------------*/
-
-	pthread_mutex_lock(&hash_table->mutex);
-
-	/**/	bigbox_list_append_tail_named(hash_table->list, hash_table_item, list_prev, list_next);
-	/**/
-	/**/	bigbox_list_append_tail_named(hash_table->table[indx], hash_table_item, table_prev, table_next);
-
-	pthread_mutex_unlock(&hash_table->mutex);
 
 	/*-----------------------------------------------------------------*/
 
