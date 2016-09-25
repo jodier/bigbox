@@ -28,8 +28,10 @@ body {
 
 /*-------------------------------------------------------------------------*/
 
-#left_div {
+#menu1_div {
 	background-color: #4C4957;
+
+	display: block;
 
 	overflow: auto;
 
@@ -43,8 +45,27 @@ body {
 
 /*-------------------------------------------------------------------------*/
 
-#right_div {
+#menu2_div {
+	background-color: #30333A;
+
+	display: none;
+
+	overflow: auto;
+
+	position: fixed;
+
+	bottom: 0;
+	left: 80px;
+	width: 300px;
+	top: 0;
+}
+
+/*-------------------------------------------------------------------------*/
+
+#main_div {
 	background-color: #D2D5DA;
+
+	display: block;
 
 	overflow: auto;
 
@@ -54,6 +75,21 @@ body {
 	left: 80px;
 	right: 0;
 	top: 0;
+}
+
+/*-------------------------------------------------------------------------*/
+
+#menu1_div a {
+	border-bottom: 1px solid #5D6370;
+
+	display: block;
+
+	line-height: 80px;
+
+	height: 80px;
+	width: 80px;
+
+	text-align: center;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -159,13 +195,25 @@ pre code .line-number:before {
 	</head>
 	<body>
 
-		<div id="left_div">
+		<div id="menu1_div">
+
+			<a href="">
+				-
+			</a>
+
+			<a href="">
+				-
+			</a>
+
+		</div>
+
+		<div id="menu2_div">
 
 			<!-- TODO -->
 
 		</div>
 
-		<div id="right_div">
+		<div id="main_div">
 
 			<div style="background-color: #EFEFF4; border: 1px solid #CCC; margin: 00px 24px; padding: 12px;">
 

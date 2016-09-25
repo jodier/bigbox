@@ -69,7 +69,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 
 	if(sock < 0)
 	{
-		return -1;
+		return sock;
 	}
 
 	/*-----------------------------------------------------------------*/
@@ -90,7 +90,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	{
 		closesocket(sock);
 
-		return -1;
+		return ret;
 	}
 
 	/*-----------------------------------------------------------------*/
@@ -103,7 +103,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	{
 		closesocket(sock);
 
-		return -1;
+		return ret;
 	}
 
 	/*-----------------------------------------------------------------*/
@@ -116,7 +116,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	{
 		closesocket(sock);
 
-		return -1;
+		return ret;
 	}
 
 	/*-----------------------------------------------------------------*/

@@ -254,16 +254,7 @@ int bigbox_server_pooler(bigbox_server_ctx_t *server_ctx, bigbox_pooler_ctx_t *p
 		/* CHECK STATUS                                            */
 		/*---------------------------------------------------------*/
 
-		if(client_sock > 0)
-		{
-			bigbox_log(LOG_TYPE_DEBUG, "connection from %d.%d.%d.%d\n",
-				(int) ((sockaddr.sin_addr.s_addr & 0xFF) >> 0),
-				(int) ((sockaddr.sin_addr.s_addr & 0xFF00) >> 8),
-				(int) ((sockaddr.sin_addr.s_addr & 0xFF0000) >> 16),
-				(int) ((sockaddr.sin_addr.s_addr & 0xFF000000) >> 24)
-			);
-		}
-		else
+		if(client_sock < 0)
 		{
 			if(errno != EINTR && errno != ECONNABORTED)
 			{

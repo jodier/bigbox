@@ -92,7 +92,7 @@ int bigbox_client_connect(bigbox_client_ctx_t *client_ctx, const char *addr, uin
 
 	if(sock < 0)
 	{
-		return -1;
+		return sock;
 	}
 
 	/*-----------------------------------------------------------------*/
@@ -113,7 +113,7 @@ int bigbox_client_connect(bigbox_client_ctx_t *client_ctx, const char *addr, uin
 	{
 		closesocket(sock);
 
-		return -1;
+		return ret;
 	}
 
 	/*-----------------------------------------------------------------*/

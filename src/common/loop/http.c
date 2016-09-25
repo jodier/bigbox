@@ -44,8 +44,8 @@
 
 /*-------------------------------------------------------------------------*/
 
-static char __hex2char(char c) {
-
+static char __hex2char(char c)
+{
 	char result;
 
 	/**/ if(c >= '0' && c <= '9') {
@@ -158,6 +158,8 @@ static ssize_t __readline(int sock, char *buffer, size_t size)
 			return -1;
 		}
 
+		/**/
+
 		if(c == '\r')
 		{
 			continue;
@@ -170,6 +172,8 @@ static ssize_t __readline(int sock, char *buffer, size_t size)
 			return (ssize_t) p - (ssize_t) buffer;
 		}
 
+		/**/
+
 		*p++ = c;
 
 		size--;
@@ -180,7 +184,7 @@ static ssize_t __readline(int sock, char *buffer, size_t size)
 
 static void __loop_handler(bigbox_server_thread_t *thread)
 {
-	char buffer[2048], in_path[2048], in_content_length[1024], in_content_type[1024], in_origin[1024];
+	char buffer[2048], in_path[2048], in_content_length[2048], in_content_type[2048], in_origin[2048];
 
 	int in_method = SVR_HTTP_METHOD_UNKNOWN;
 
