@@ -73,19 +73,16 @@ bool bigbox_hash_table_finalize(bigbox_hash_table_t *hash_table)
 	{
 		bigbox_list_remove_named(hash_table->list, hash_table_item, list_prev, list_next);
 
-		free(hash_table_item);
+		free((void *) hash_table_item);
 	}
 
 	/*-----------------------------------------------------------------*/
 
 	hash_table->dim = 0x00;
 
-	if(hash_table->table != NULL)
-	{
-		free(hash_table->table);
+	free((void *) hash_table->table);
 
-		hash_table->table = NULL;
-	}
+	hash_table->table = NULL;
 
 	/*-----------------------------------------------------------------*/
 	
@@ -102,7 +99,7 @@ void bigbox_hash_table_item_release_unsafe(bigbox_hash_table_t *hash_table, bigb
 	/**/
 	/**/		bigbox_list_remove_named(hash_table->table[indx], hash_table_item, table_prev, table_next);
 	/**/
-	/**/		free(hash_table_item);
+	/**/		free((void *) hash_table_item);
 	/**/	}
 }
 
@@ -142,7 +139,7 @@ bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 	   &&
 	   size != 0x00
 	 ) {
-		bigbox_hash_table_item_t *hash_table_item = malloc(sizeof(bigbox_hash_table_item_t) + size);
+		bigbox_hash_table_item_t *hash_table_item = (bigbox_hash_table_item_t *) malloc(sizeof(bigbox_hash_table_item_t) + size);
 
 		if(hash_table_item == NULL)
 		{
@@ -153,7 +150,7 @@ bool bigbox_hash_table_put_by_hash(bigbox_hash_table_t *hash_table, uint64_t has
 		hash_table_item->expire = expire;
 
 		hash_table_item->hash = hash;
-		hash_table_item->buff = memcpy(hash_table_item + 1, buff, size);
+		hash_table_item->buff = memcpy((char *) (hash_table_item + 1), buff, size);
 		hash_table_item->size = size;
 
 		/*---------------------------------------------------------*/

@@ -81,7 +81,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 	sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	/*-----------------------------------------------------------------*/
-
+#ifndef WIN32
 	int option = 1;
 
 	ret = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
@@ -92,7 +92,7 @@ int bigbox_server_listen(bigbox_server_ctx_t *server_ctx, int port, int backlog)
 
 		return ret;
 	}
-
+#endif
 	/*-----------------------------------------------------------------*/
 	/* BIND SOCKET                                                     */
 	/*-----------------------------------------------------------------*/

@@ -57,6 +57,7 @@ static void help(const char *program_name, size_t default_dim, uint32_t default_
 
 /*-------------------------------------------------------------------------*/
 
+static bigbox_lua_ctx_t lua_ctx;
 static bigbox_hash_table_t hash_table;
 static bigbox_server_ctx_t server_ctx;
 static bigbox_pooler_ctx_t pooler_ctx;
@@ -69,6 +70,8 @@ static void __exit(int signal)
 
 	pooler_ctx.alive = 0;
 
+	/**/
+
 	if(bigbox_server_finalize(&server_ctx) < 0)
 	{
 		bigbox_log(LOG_TYPE_ERROR, "could not finalize server!\n");
@@ -77,6 +80,11 @@ static void __exit(int signal)
 	if(bigbox_hash_table_finalize(&hash_table) == false)
 	{
 		bigbox_log(LOG_TYPE_ERROR, "could not finalize hash table!\n");
+	}
+
+	if(bigbox_lua_finalize(&lua_ctx) == false)
+	{
+		bigbox_log(LOG_TYPE_ERROR, "could not finalize LUA!\n");
 	}
 }
 
@@ -89,37 +97,57 @@ static void xxxx_xxxxx_xxxx(void *arg)
 
 /*-------------------------------------------------------------------------*/
 
-static void http_handler(const char **out_content_type, buff_t *out_content_buff, size_t *out_content_size, void (** done_handler_ptr)(void *), void **done_handler_arg, int in_method, const char *in_path, const char *in_content_type, buff_t in_content_buff, size_t in_content_size, size_t nb_of_params, bigbox_http_param_t arg_array[])
+static void http_handler(bigbox_http_response_t *response, bigbox_http_request_t *request)
 {
-	*out_content_type = "text/html";
+	response->content_type = "text/html";
 
-	/**/ if(strcmp(in_path, "/") == 0)
+	/**/ if(strcmp(request->resource_path, "/") == 0)
 	{
-		*out_content_buff = index_html_buff;
-		*out_content_size = INDEX_HTML_SIZE;
+		response->content_buff = index_html_buff;
+		response->content_size = INDEX_HTML_SIZE;
 	}
-	else if(strncmp(in_path, "/key/", 5) == 0)
+	else if(strcmp(request->resource_path, "/lua/") == 0)
+	{
+		if(request->method == BIGBOX_HTTP_METHOD_POST
+		   ||
+		   request->method == BIGBOX_HTTP_METHOD_PUT
+		 ) {
+		 	buff_t buff = (buff_t) bigbox_lua_execute(&lua_ctx, request->content_buff);
+
+		 	response->content_buff = (buff_t) /****/(buff);
+			response->content_size = (size_t) strlen(buff);
+
+			response->done_handler_ptr = buff;
+			response->done_handler_arg = free;
+		}
+		else
+		{
+			response->content_buff = "invalid request";
+			response->content_size = 0x00000000000000F;
+		}
+	}
+	else if(strncmp(request->resource_path, "/key/", 5) == 0)
 	{
 		/*---------------------------------------------------------*/
 		/* METHOD GET                                              */
 		/*---------------------------------------------------------*/
 
-		/**/ if(in_method == SVR_HTTP_METHOD_GET)
+		/**/ if(request->method == BIGBOX_HTTP_METHOD_GET)
 		{
 			bigbox_hash_table_item_t *hash_table_item;
 
-			if(bigbox_hash_table_get(&hash_table, in_path + 5, &hash_table_item))
+			if(bigbox_hash_table_get(&hash_table, request->resource_path + 5, &hash_table_item))
 			{
-				*out_content_buff = hash_table_item->buff;
-				*out_content_size = hash_table_item->size;
+				response->content_buff = hash_table_item->buff;
+				response->content_size = hash_table_item->size;
 
-				*done_handler_ptr = xxxx_xxxxx_xxxx;
-				*done_handler_arg = hash_table_item;
+				response->done_handler_ptr = xxxx_xxxxx_xxxx;
+				response->done_handler_arg = hash_table_item;
 			}
 			else
 			{
-				*out_content_buff = NULL;
-				*out_content_size = 0x00;
+				response->content_buff = NULL;
+				response->content_size = 0x00;
 			}
 		}
 
@@ -127,19 +155,19 @@ static void http_handler(const char **out_content_type, buff_t *out_content_buff
 		/* METHOD POST/PUT                                         */
 		/*---------------------------------------------------------*/
 
-		else if(in_method == SVR_HTTP_METHOD_POST
+		else if(request->method == BIGBOX_HTTP_METHOD_POST
 		        ||
-			in_method == SVR_HTTP_METHOD_PUT
+			request->method == BIGBOX_HTTP_METHOD_PUT
 		 ) {
-			if(bigbox_hash_table_put(&hash_table, in_path + 5, in_content_buff, in_content_size, UINT32_MAX))
+			if(bigbox_hash_table_put(&hash_table, request->resource_path + 5, request->content_buff, request->content_size, UINT32_MAX))
 			{
-				*out_content_buff = "entry added";
-				*out_content_size = 0x0000000000B;
+				response->content_buff = "entry added";
+				response->content_size = 0x0000000000B;
 			}
 			else
 			{
-				*out_content_buff = "entry not added";
-				*out_content_size = 0x00000000000000F;
+				response->content_buff = "entry not added";
+				response->content_size = 0x00000000000000F;
 			}
 		}
 
@@ -147,17 +175,17 @@ static void http_handler(const char **out_content_type, buff_t *out_content_buff
 		/* METHOD DEL                                              */
 		/*---------------------------------------------------------*/
 
-		else if(in_method == SVR_HTTP_METHOD_DEL)
+		else if(request->method == BIGBOX_HTTP_METHOD_DEL)
 		{
-			if(bigbox_hash_table_del(&hash_table, in_path + 5))
+			if(bigbox_hash_table_del(&hash_table, request->resource_path + 5))
 			{
-				*out_content_buff = "entry deleted";
-				*out_content_size = 0x000000000000D;
+				response->content_buff = "entry deleted";
+				response->content_size = 0x000000000000D;
 			}
 			else
 			{
-				*out_content_buff = "entry not found";
-				*out_content_size = 0x00000000000000F;
+				response->content_buff = "entry not found";
+				response->content_size = 0x00000000000000F;
 			}
 		}
 
@@ -165,16 +193,16 @@ static void http_handler(const char **out_content_type, buff_t *out_content_buff
 
 		else
 		{
-			*out_content_buff = "invalid request";
-			*out_content_size = 0x00000000000000F;
+			response->content_buff = "invalid request";
+			response->content_size = 0x00000000000000F;
 		}
 
 		/*---------------------------------------------------------*/
 	}
 	else
 	{
-		*out_content_buff = "invalid request";
-		*out_content_size = 0x00000000000000F;
+		response->content_buff = "invalid request";
+		response->content_size = 0x00000000000000F;
 	}
 }
 
@@ -232,13 +260,23 @@ int main(int argc, char **argv)
 
 	/*-----------------------------------------------------------------*/
 
-	if(bigbox_hash_table_initialize(&hash_table, dim) == false)
+	if(bigbox_lua_initialize(&lua_ctx) == false)
 	{
-		bigbox_log(LOG_TYPE_FATAL, "could not initialize DB!\n");
+		bigbox_log(LOG_TYPE_FATAL, "could not initialize LUA!\n");
 	}
 
 	/*-----------------------------------------------------------------*/
 
+	if(bigbox_hash_table_initialize(&hash_table, dim) == false)
+	{
+		bigbox_log(LOG_TYPE_FATAL, "could not initialize hash table!\n");
+	}
+
+	/*-----------------------------------------------------------------*/
+/*
+	signal(SIGCLD, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
+ */
 	signal(SIGINT, __exit);
 
 	/*-----------------------------------------------------------------*/

@@ -34,7 +34,9 @@
 #include <string.h>
 
 #if !defined(_WIN32) && !defined(_WIN64)
-  #include <sys/socket.h>
+  #include <fcntl.h>
+
+  #include <sys/select.h>
 #else
   #include <winsock2.h>
 #endif
@@ -104,7 +106,7 @@ static char *__decode_uri(char *s)
 
 /*-------------------------------------------------------------------------*/
 
-static size_t __deserialize_params(bigbox_http_param_t arg_array[], char *s)
+static size_t __deserialize_params(bigbox_http_param_t param_array[], char *s)
 {
 	char *lasts;
 
@@ -132,8 +134,8 @@ static size_t __deserialize_params(bigbox_http_param_t arg_array[], char *s)
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		arg_array[result].name = p;
-		arg_array[result].value = q;
+		param_array[result].name = p;
+		param_array[result].value = q;
 
 		result++;
 
@@ -182,15 +184,17 @@ static ssize_t __readline(int sock, char *buffer, size_t size)
 
 /*-------------------------------------------------------------------------*/
 
+static struct timeval _timeout = {0, 0};
+
+/*-------------------------------------------------------------------------*/
+
 static void __loop_handler(bigbox_server_thread_t *thread)
 {
-	char buffer[2048], in_path[2048], in_content_length[2048], in_content_type[2048], in_origin[2048];
-
-	int in_method = SVR_HTTP_METHOD_UNKNOWN;
-
-	register char *p;
+	char buffer[2048], in_resource_path[2048] = "", in_content_type[2048] = "", in_origin[2048] = "";
 
 	ssize_t size;
+
+	char *p, *q;
 
 	int ret;
 
@@ -198,10 +202,37 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	/*                                                                 */
 	/*-----------------------------------------------------------------*/
 
-	in_path[0] = '\0';
-	in_content_length[0] = '\0';
-	in_content_type[0] = '\0';
-	in_origin[0] = '\0';
+	fd_set read_fd_set;
+
+	FD_ZERO(&read_fd_set);
+
+	FD_SET(thread->client_sock, &read_fd_set);
+
+	/*-----------------------------------------------------------------*/
+	/*                                                                 */
+	/*-----------------------------------------------------------------*/
+
+	bigbox_http_response_t response;
+
+	response.content_type = "text/plain";
+	response.content_buff = ((((NULL))));
+	response.content_size = ((((0x00))));
+
+	response.done_handler_ptr = NULL;
+	response.done_handler_arg = NULL;
+
+	/*-----------------------------------------------------------------*/
+	/*                                                                 */
+	/*-----------------------------------------------------------------*/
+
+	bigbox_http_request_t request;
+
+	request.method = BIGBOX_HTTP_METHOD_UNKNOWN;
+
+	request.resource_path = in_resource_path;
+	request.content_type = in_content_type;
+
+	request.nb_of_params = 0;
 
 	/*-----------------------------------------------------------------*/
 	/*                                                                 */
@@ -229,15 +260,13 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		/**/ if(strncmp(buffer, "GET ", 4) == 0)
 		{
-			p = strstr(buffer, " HTTP");
+			q = strstr(p = buffer + 4, " HTTP");
 
-			if(p != NULL)
+			if(q != NULL)
 			{
-				*p = '\0';
+				strncpy(in_resource_path, p, q - p)[q - p] = '\0';
 
-				strcpy(in_path, buffer + 4);
-
-				in_method = SVR_HTTP_METHOD_GET;
+				request.method = BIGBOX_HTTP_METHOD_GET;
 			}
 		}
 
@@ -245,15 +274,13 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		else if(strncmp(buffer, "POST ", 5) == 0)
 		{
-			p = strstr(buffer, " HTTP");
+			q = strstr(p = buffer + 5, " HTTP");
 
-			if(p != NULL)
+			if(q != NULL)
 			{
-				*p = '\0';
+				strncpy(in_resource_path, p, q - p)[q - p] = '\0';
 
-				strcpy(in_path, buffer + 5);
-
-				in_method = SVR_HTTP_METHOD_POST;
+				request.method = BIGBOX_HTTP_METHOD_POST;
 			}
 		}
 
@@ -261,15 +288,13 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		else if(strncmp(buffer, "PUT ", 4) == 0)
 		{
-			p = strstr(buffer, " HTTP");
+			q = strstr(p = buffer + 4, " HTTP");
 
-			if(p != NULL)
+			if(q != NULL)
 			{
-				*p = '\0';
+				strncpy(in_resource_path, p, q - p)[q - p] = '\0';
 
-				strcpy(in_path, buffer + 4);
-
-				in_method = SVR_HTTP_METHOD_PUT;
+				request.method = BIGBOX_HTTP_METHOD_PUT;
 			}
 		}
 
@@ -277,35 +302,26 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		else if(strncmp(buffer, "DELETE ", 7) == 0)
 		{
-			p = strstr(buffer, " HTTP");
+			q = strstr(p = buffer + 7, " HTTP");
 
-			if(p != NULL)
+			if(q != NULL)
 			{
-				*p = '\0';
+				strncpy(in_resource_path, p, q - p)[q - p] = '\0';
 
-				strcpy(in_path, buffer + 7);
-
-				in_method = SVR_HTTP_METHOD_DEL;
+				request.method = BIGBOX_HTTP_METHOD_DEL;
 			}
 		}
 
 		/*---------------------------------------------------------*/
 
-		else if(strncmp(buffer, "Content-Length: ", 16) == 0)
-		{
-			strcpy(in_content_length, buffer + 16);
-		}
-
-		/*---------------------------------------------------------*/
-
-		else if(strncmp(buffer, "Content-Type: ", 14) == 0)
+		else if(strncasecmp(buffer, "Content-Type: ", 14) == 0)
 		{
 			strcpy(in_content_type, buffer + 14);
 		}
 
 		/*---------------------------------------------------------*/
 
-		else if(strncmp(buffer, "Origin: ", 8) == 0)
+		else if(strncasecmp(buffer, "Origin: ", 8) == 0)
 		{
 			strcpy(in_origin, buffer + 8);
 		}
@@ -314,104 +330,105 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	}
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
-	/*-----------------------------------------------------------------*/
-
-	const char *out_content_type = "text/plain";
-	buff_t out_content_buff = NULL;
-	size_t out_content_size = 0x00;
-
-	void (* done_handler_ptr)(void *) = NULL;
-	void *done_handler_arg = NULL;
-
-	/*-----------------------------------------------------------------*/
 
 	if(thread->user_handler_ptr != NULL)
 	{
-		size_t nb_of_args = 0;
-
-		bigbox_http_param_t arg_array[128];
-
 		/*---------------------------------------------------------*/
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		char *params = strchr(in_path, '?');
+		char *params = strchr(in_resource_path, '?');
 
 		if(params != NULL)
 		{
 			*params++ = '\0';
 
-			nb_of_args += __deserialize_params(&arg_array[nb_of_args], params);
+			request.nb_of_params += __deserialize_params(request.param_array + request.nb_of_params, params);
 		}
 
 		/*---------------------------------------------------------*/
 		/*                                                         */
 		/*---------------------------------------------------------*/
 
-		buff_t in_content_buff = 0x000000000000000000000;
-		size_t in_content_size = atoi(in_content_length);
+		ssize_t in_content_incr = 0;
+		ssize_t in_content_size = 0;
+
+		char *in_content_buff = NULL;
 
 		/*---------------------------------------------------------*/
 
-		if(in_content_size > 0)
+		for(;;)
 		{
-			in_content_buff = malloc(in_content_size + 1);
+			/*-------------------------------------------------*/
 
-			if(in_content_buff != NULL)
+			select(thread->client_sock + 1, &read_fd_set, NULL, NULL, &_timeout);
+
+			if(FD_ISSET(thread->client_sock, &read_fd_set) == 0)
 			{
-				/*-----------------------------------------*/
-				/*                                         */
-				/*-----------------------------------------*/
-
-				char *p = (char *) in_content_buff;
-
-				for(size_t i = 0; i < in_content_size; i++)
-				{
-					if(bigbox_rio_read(thread->client_sock, p++, 1) != 1)
-					{
-						break;
-					}
-				}
-
-				*p = '\0';
-
-				/*-----------------------------------------*/
-				/*                                         */
-				/*-----------------------------------------*/
-
-				if(strcmp(in_content_type, "application/x-www-form-urlencoded") == 0)
-				{
-					nb_of_args += __deserialize_params(arg_array + nb_of_args, in_content_buff);
-
-					in_content_size = 0;
-				}
-
-				/*-----------------------------------------*/
+				break;
 			}
-			else
+
+			/*-------------------------------------------------*/
+
+			in_content_buff = (char *) realloc((void *) in_content_buff, in_content_size + 256 + 1);
+
+			if(in_content_buff == NULL)
 			{
-				in_content_size = 0;
+				in_content_size = 0x00;
+
+				break;
+			}
+
+			/*-------------------------------------------------*/
+
+			in_content_incr = bigbox_rio_read(thread->client_sock, in_content_buff + in_content_size, 256);
+
+			if(in_content_incr < 0)
+			{
+				free((void *) in_content_buff);
+
+				in_content_buff = NULL;
+				in_content_size = 0x00;
+
+				break;
+			}
+
+			if(in_content_incr == 0)
+			{
+				break;
+			}
+
+			/*-------------------------------------------------*/
+
+			in_content_size += in_content_incr;
+
+			/*-------------------------------------------------*/
+		}
+
+		/*---------------------------------------------------------*/
+
+		if(in_content_buff != NULL)
+		{
+			in_content_buff[in_content_size] = '\0';
+
+			if(strcmp(in_content_type, "application/x-www-form-urlencoded") == 0)
+			{
+				request.nb_of_params += __deserialize_params(request.param_array + request.nb_of_params, in_content_buff);
+
+				in_content_size = 0x00;
 			}
 		}
 
 		/*---------------------------------------------------------*/
 		/*                                                         */
 		/*---------------------------------------------------------*/
+
+		request.content_buff = in_content_buff;
+		request.content_size = in_content_size;
 
 		((bigbox_http_handler_ptr_t) thread->user_handler_ptr)(
-			&out_content_type,
-			&out_content_buff,
-			&out_content_size,
-			&done_handler_ptr,
-			&done_handler_arg,
-			in_method,
-			in_path,
-			in_content_type,
-			in_content_buff,
-			in_content_size,
-			nb_of_args,
-			arg_array
+			&response,
+			&request
 		);
 
 		/*---------------------------------------------------------*/
@@ -420,7 +437,7 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 
 		if(in_content_buff != NULL)
 		{
-			free(in_content_buff);
+			free((void *) in_content_buff);
 		}
 
 		/*---------------------------------------------------------*/
@@ -438,8 +455,8 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		"Access-Control-Allow-Credentials: true\n"
 		"Access-Control-Allow-Origin: %s\n"
 		"\n",
-		out_content_type,
-		out_content_size,
+		response.content_type,
+		response.content_size,
 		in_origin
 	);
 
@@ -453,14 +470,10 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	}
 
 	/*-----------------------------------------------------------------*/
-	/*                                                                 */
-	/*-----------------------------------------------------------------*/
 
-	if(out_content_buff != NULL
-	   &&
-	   out_content_size != 0x00
-	 ) {
-		ret = bigbox_rio_write(thread->client_sock, out_content_buff, out_content_size);
+	if(response.content_buff != NULL)
+	{
+		ret = bigbox_rio_write(thread->client_sock, response.content_buff, response.content_size);
 
 		if(ret < 0)
 		{
@@ -472,9 +485,9 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 	/*                                                                 */
 	/*-----------------------------------------------------------------*/
 
-	if(done_handler_ptr != NULL)
+	if(response.done_handler_ptr != NULL)
 	{
-		done_handler_ptr(done_handler_arg);
+		response.done_handler_ptr(response.done_handler_arg);
 	}
 
 	/*-----------------------------------------------------------------*/

@@ -177,11 +177,9 @@ typedef struct bigbox_pooler_ctx_s
 /* HIGH LEVEL SERVERS                                                      */
 /*-------------------------------------------------------------------------*/
 
-#define SVR_HTTP_METHOD_UNKNOWN	0
-#define SVR_HTTP_METHOD_GET	1
-#define SVR_HTTP_METHOD_POST	2
-#define SVR_HTTP_METHOD_PUT	3
-#define SVR_HTTP_METHOD_DEL	4
+typedef void (* bigbox_tcp_handler_ptr_t)(
+	int client_sock
+);
 
 /*-------------------------------------------------------------------------*/
 
@@ -194,30 +192,57 @@ typedef struct bigbox_http_param_s
 
 /*-------------------------------------------------------------------------*/
 
-typedef void (* bigbox_tcp_handler_ptr_t)(
-	int client_sock
-);
+typedef struct bigbox_http_request_s
+{
+	enum bigbox_http_method_e {
+		BIGBOX_HTTP_METHOD_UNKNOWN,
+		BIGBOX_HTTP_METHOD_GET,
+		BIGBOX_HTTP_METHOD_POST,
+		BIGBOX_HTTP_METHOD_PUT,
+		BIGBOX_HTTP_METHOD_DEL,
+
+	} method;
+
+	const char *resource_path;
+	const char *content_type;
+	buff_t content_buff;
+	size_t content_size;
+
+	size_t nb_of_params;
+	bigbox_http_param_t param_array[128];
+
+} bigbox_http_request_t;
 
 /*-------------------------------------------------------------------------*/
 
-typedef void (* bigbox_http_handler_ptr_t)(
+typedef void (FREE)(void *);
 
-	const char **content_type,
-	buff_t *content_buff,
-	size_t *content_size,
+/*-------------------------------------------------------------------------*/
 
-	void (** done_handler_ptr)(void *),
-	void **done_handler_arg,
+typedef struct bigbox_http_response_s
+{
+	const char *content_type;
+	buff_t content_buff;
+	size_t content_size;
 
-	int method,
-	const char *in_path,
-	const char *in_content_type,
-	buff_t in_content_buff,
-	size_t in_content_size,
+	FREE *done_handler_ptr;
+	void *done_handler_arg;
 
-	size_t nb_of_params,
-	bigbox_http_param_t param_array[]
-);
+} bigbox_http_response_t;
+
+/*-------------------------------------------------------------------------*/
+
+typedef void (* bigbox_http_handler_ptr_t)(struct bigbox_http_response_s *response, struct bigbox_http_request_s *request);
+
+/*-------------------------------------------------------------------------*/
+/* LUA                                                                     */
+/*-------------------------------------------------------------------------*/
+
+typedef struct bigbox_lua_ctx_s
+{
+	void *state;
+
+} bigbox_lua_ctx_t;
 
 /*-------------------------------------------------------------------------*/
 
@@ -413,6 +438,23 @@ int bigbox_http_loop(
 	struct bigbox_pooler_ctx_s *http_ctx,
 	bigbox_http_handler_ptr_t handler_ptr,
 	int nb_of_threads
+);
+
+/*-------------------------------------------------------------------------*/
+/* LUA                                                                     */
+/*-------------------------------------------------------------------------*/
+
+bool bigbox_lua_initialize(
+	struct bigbox_lua_ctx_s *lua_ctx
+);
+
+bool bigbox_lua_finalize(
+	struct bigbox_lua_ctx_s *lua_ctx
+);
+
+const char *bigbox_lua_execute(
+	struct bigbox_lua_ctx_s *lua_ctx,
+	const char *code
 );
 
 /*-------------------------------------------------------------------------*/
