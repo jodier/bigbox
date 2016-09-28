@@ -361,10 +361,10 @@ static void __loop_handler(bigbox_server_thread_t *thread)
 		{
 			/*-------------------------------------------------*/
 
-			select(thread->client_sock + 1, &read_fd_set, NULL, NULL, &_timeout);
-
-			if(FD_ISSET(thread->client_sock, &read_fd_set) == 0)
-			{
+			if(select(thread->client_sock + 1, &read_fd_set, NULL, NULL, &_timeout) < 0
+			   ||
+			   FD_ISSET(thread->client_sock, &read_fd_set) == 0
+			 ) {
 				break;
 			}
 
